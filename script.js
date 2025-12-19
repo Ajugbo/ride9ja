@@ -688,3 +688,66 @@ window.formatCurrency = formatCurrency;
 window.calculateInterstateFare = calculateInterstateFare;
 
 console.log('Ride9ja JavaScript loaded successfully');
+// ===== FORM SUBMISSION FIX =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Setting up form handlers...');
+    
+    // Setup form submissions when modals are shown
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[onclick*="showRiderModal"]') || 
+            e.target.closest('[onclick*="showDriverModal"]')) {
+            setTimeout(setupFormHandlers, 100);
+        }
+    });
+    
+    // Initial setup
+    setupFormHandlers();
+});
+
+function setupFormHandlers() {
+    // Get all forms in modals
+    const forms = document.querySelectorAll('.rider-form, .driver-form');
+    
+    forms.forEach(form => {
+        // Remove existing listeners
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Add new listener
+        newForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleFormSubmit(this);
+        });
+    });
+    
+    console.log('Form handlers setup complete');
+}
+
+function handleFormSubmit(form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.disabled = true;
+    
+    // Simulate API call
+    setTimeout(() => {
+        // Show success
+        const successModal = document.getElementById('successModalOverlay');
+        if (successModal) {
+            closeModal();
+            successModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Reset form
+        form.reset();
+        
+        // Restore button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        console.log('Form submitted successfully');
+    }, 1500);
+}
