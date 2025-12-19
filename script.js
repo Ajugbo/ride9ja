@@ -2,7 +2,30 @@
 // Complete functionality for City & Interstate services
 
 console.log('🚗 Ride9ja - Safe Travels Across Nigeria');
-
+// ===== MOBILE MENU FIX =====
+document.addEventListener('DOMContentLoaded', function() {
+    const navToggle = document.getElementById('navToggle');
+    const navMenu = document.getElementById('navMenu');
+    
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+            this.innerHTML = navMenu.classList.contains('active') 
+                ? '<i class="fas fa-times"></i>' 
+                : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Close menu when clicking a link
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+                navToggle.innerHTML = '<i class="fas fa-bars"></i>';
+            });
+        });
+        
+        console.log('Mobile menu initialized');
+    }
+});
 // ===== GLOBAL VARIABLES =====
 let currentService = 'city'; // 'city' or 'interstate'
 
