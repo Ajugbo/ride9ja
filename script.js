@@ -821,3 +821,159 @@ function handleFormSubmit(form) {
         console.log('Form submitted successfully');
     }, 1500);
 }
+
+// ===== GOOGLE SHEETS BACKEND - ADD THIS AT THE END =====
+https://script.google.com/macros/s/AKfycbYFZjr9Is-ntYe_ILWl2nt1NrhwQCoaMjtRRu-PSIAf2v3kmpEk9IX4ufe0M94jj_Bo...
+
+async function saveToRide9jaDatabase(data, userType) {
+    try {
+        // Determine which sheet to use
+        const sheetName = userType === 'rider' 
+            ? (data.service === 'interstate' ? 'Riders_Interstate' : 'Riders_City')
+            : 'Drivers';
+        
+        // Prepare data for Google Sheets
+        const payload = {
+            ...data,
+            sheet: sheetName,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('Saving to database:', payload);
+        
+        // Send to Google Sheets
+        const response = await fetch(RIDE9JA_BACKEND_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Important for cross-origin
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        return { success: true, sheet: sheetName };
+        
+    } catch (error) {
+        console.log('Database save failed, using fallback:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Enhanced form handler - REPLACES OLD FORM HANDLERS
+async function handleRide9jaForm(form, userType) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Ride9ja...';
+    submitBtn.disabled = true;
+    
+    // Collect all form data
+    const formElements = form.elements;
+    const data = {
+        service: currentService, // 'city' or 'interstate'
+        timestamp: new Date().toLocaleString('en-NG')
+    };
+    
+    // Extract all form fields
+    for (let element of formElements) {
+        if (element.name && element.value) {
+            data[element.name] = element.value;
+        }
+        if (element.id && element.value) {
+            data[element.id] = element.value;
+        }
+    }
+    
+    // Add name and phone if available
+    if (!data.name && form.querySelector('[name="name"]')) {
+        data.name = form.querySelector('[name="name"]').value;
+    }
+    if (!data.phone && form.querySelector('[name="phone"]')) {
+        data.phone = form.querySelector('[name="phone"]').value;
+    }
+    
+    console.log('Form data collected:', data);
+    
+    // Save to database
+    setTimeout(async () => {
+        const result = await saveToRide9jaDatabase(data, userType);
+        
+        if (result.success) {
+            showSuccess(
+                `✅ Registration saved successfully!<br><br>` +
+                `<strong>Sheet:</strong> ${result.sheet}<br>` +
+                `<strong>Name:</strong> ${data.name || 'Not provided'}<br>` +
+                `<strong>Phone:</strong> ${data.phone || 'Not provided'}<br><br>` +
+                `We'll contact you within 24 hours.`
+            );
+        } else {
+            // Fallback: Show data and prompt for manual save
+            showSuccess(
+                `📧 Registration ready!<br><br>` +
+                `<strong>Please save this info:</strong><br>` +
+                `Name: ${data.name || ''}<br>` +
+                `Phone: ${data.phone || ''}<br>` +
+                `Service: ${currentService === 'city' ? 'City Ride' : 'Interstate'}<br><br>` +
+                `Contact us at: hello@ride9ja.com`
+            );
+        }
+        
+        closeModal();
+        form.reset();
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+    }, 1500);
+}
+
+// Update existing form listeners - REPLACE OLD setupFormHandlers
+function setupRide9jaFormHandlers() {
+    console.log('Setting up Ride9ja form handlers...');
+    
+    // City Rider Form
+    const cityRiderForm = document.getElementById('cityRiderForm');
+    if (cityRiderForm) {
+        cityRiderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleRide9jaForm(this, 'rider');
+        });
+    }
+    
+    // Interstate Rider Form
+    const interstateRiderForm = document.getElementById('interstateRiderForm');
+    if (interstateRiderForm) {
+        interstateRiderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleRide9jaForm(this, 'rider');
+        });
+    }
+    
+    // City Driver Form
+    const cityDriverForm = document.getElementById('cityDriverForm');
+    if (cityDriverForm) {
+        cityDriverForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleRide9jaForm(this, 'driver');
+        });
+    }
+    
+    // Interstate Driver Form
+    const interstateDriverForm = document.getElementById('interstateDriverForm');
+    if (interstateDriverForm) {
+        interstateDriverForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleRide9jaForm(this, 'driver');
+        });
+    }
+}
+
+// Initialize on page load - ADD THIS TO EXISTING DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Your existing initialization code...
+    
+    // ADD THIS LINE:
+    setupRide9jaFormHandlers();
+    
+    console.log('Ride9ja with Google Sheets backend ready!');
+});
