@@ -84,17 +84,42 @@ const navLinks = document.querySelectorAll('.nav-link');
 const counters = document.querySelectorAll('.counter');
 const heroStats = document.querySelector('.hero-stats');
 
+// ===== BACKEND URL CONSTANT =====
+// Replace this with your actual Apps Script "exec" URL (keep it quoted)
+const RIDE9JA_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbYFZjr9Is-ntYe_ILWl2nt1NrhwQCoaMjtRRu-PSIAf2v3kmpEk9IX4ufe0M94jj_Bo/exec';
+
 // ===== LOADING SCREEN =====
 window.addEventListener('load', () => {
-    setTimeout(() => {
-        loadingScreen.classList.add('fade-out');
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-            initAnimations();
-            console.log('✅ Website loaded successfully');
-        }, 500);
-    }, 1500);
+    try {
+        if (loadingScreen) {
+            setTimeout(() => {
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    if (typeof initAnimations === 'function') initAnimations();
+                    console.log('✅ Website loaded successfully');
+                }, 500);
+            }, 1500);
+        } else {
+            // No loading screen present — still init animations
+            if (typeof initAnimations === 'function') initAnimations();
+            console.log('✅ Website loaded (no loadingScreen element found)');
+        }
+    } catch (err) {
+        console.error('Error during load handler:', err);
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        if (typeof initAnimations === 'function') initAnimations();
+    }
 });
+
+// Safety fallback: hide loader after 8s to avoid indefinite hang
+setTimeout(() => {
+    const ls = document.getElementById('loadingScreen');
+    if (ls && window.getComputedStyle(ls).display !== 'none') {
+        ls.style.display = 'none';
+        console.warn('Loader fallback: hiding loading screen after timeout');
+    }
+}, 8000);
 
 // ===== MOBILE NAVIGATION =====
 navToggle?.addEventListener('click', () => {
@@ -491,7 +516,7 @@ function createModals() {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    setupFormHandlers();
+    setupRide9jaFormHandlers();
 }
 
 // ===== MODAL FUNCTIONS =====
@@ -574,33 +599,7 @@ function switchDriverService(service) {
     if (activeForm) activeForm.classList.add('active');
 }
 
-// ===== FORM HANDLING =====
-function setupFormHandlers() {
-    // Rider forms
-    document.getElementById('cityRiderForm')?.addEventListener('submit', handleCityRiderSubmit);
-    document.getElementById('interstateRiderForm')?.addEventListener('submit', handleInterstateRiderSubmit);
-    
-    // Driver forms
-    document.getElementById('cityDriverForm')?.addEventListener('submit', handleCityDriverSubmit);
-    document.getElementById('interstateDriverForm')?.addEventListener('submit', handleInterstateDriverSubmit);
-    
-    // Close modal when clicking outside
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                closeModal();
-            }
-        });
-    });
-    
-    // Close with Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
-}
-
+// ===== FORM HANDLING (original simple handlers kept where used) =====
 function handleCityRiderSubmit(e) {
     e.preventDefault();
     const form = e.target;
@@ -692,24 +691,28 @@ function selectCityService() {
     document.querySelectorAll('.service-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector('[onclick="selectCityService()"]').classList.add('active');
+    const selector = document.querySelector('[onclick="selectCityService()"]');
+    if (selector) selector.classList.add('active');
     
     document.querySelectorAll('.service-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById('cityContent').classList.add('active');
+    const cityContent = document.getElementById('cityContent');
+    if (cityContent) cityContent.classList.add('active');
 }
 
 function selectInterstateService() {
     document.querySelectorAll('.service-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector('[onclick="selectInterstateService()"]').classList.add('active');
+    const selector = document.querySelector('[onclick="selectInterstateService()"]');
+    if (selector) selector.classList.add('active');
     
     document.querySelectorAll('.service-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById('interstateContent').classList.add('active');
+    const interstateContent = document.getElementById('interstateContent');
+    if (interstateContent) interstateContent.classList.add('active');
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -758,7 +761,8 @@ window.formatCurrency = formatCurrency;
 window.calculateInterstateFare = calculateInterstateFare;
 
 console.log('Ride9ja JavaScript loaded successfully');
-// ===== FORM SUBMISSION FIX =====
+
+// ===== FORM SUBMISSION FIX (robust handler replacer) =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Setting up form handlers...');
     
@@ -766,65 +770,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (e.target.closest('[onclick*="showRiderModal"]') || 
             e.target.closest('[onclick*="showDriverModal"]')) {
-            setTimeout(setupFormHandlers, 100);
+            setTimeout(setupRide9jaFormHandlers, 100);
         }
     });
     
     // Initial setup
-    setupFormHandlers();
+    setupRide9jaFormHandlers();
 });
 
-function setupFormHandlers() {
-    // Get all forms in modals
-    const forms = document.querySelectorAll('.rider-form, .driver-form');
-    
-    forms.forEach(form => {
-        // Remove existing listeners
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
-        
-        // Add new listener
-        newForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleFormSubmit(this);
-        });
-    });
-    
-    console.log('Form handlers setup complete');
-}
 
-function handleFormSubmit(form) {
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    // Show loading
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    submitBtn.disabled = true;
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Show success
-        const successModal = document.getElementById('successModalOverlay');
-        if (successModal) {
-            closeModal();
-            successModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-        
-        // Reset form
-        form.reset();
-        
-        // Restore button
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        
-        console.log('Form submitted successfully');
-    }, 1500);
-}
-
-// ===== GOOGLE SHEETS BACKEND - ADD THIS AT THE END =====
-https://script.google.com/macros/s/AKfycbYFZjr9Is-ntYe_ILWl2nt1NrhwQCoaMjtRRu-PSIAf2v3kmpEk9IX4ufe0M94jj_Bo...
-
+// ===== RIDE9JA: Google Sheets / Backend integration =====
+// Resilient save function using the RIDE9JA_BACKEND_URL constant
 async function saveToRide9jaDatabase(data, userType) {
     try {
         // Determine which sheet to use
@@ -841,32 +797,73 @@ async function saveToRide9jaDatabase(data, userType) {
         
         console.log('Saving to database:', payload);
         
-        // Send to Google Sheets
-        const response = await fetch(RIDE9JA_BACKEND_URL, {
-            method: 'POST',
-            mode: 'no-cors', // Important for cross-origin
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
+        // Attempt CORS request first. If your Apps Script returns proper CORS headers this will succeed.
+        // If it doesn't, you may need to fall back to 'no-cors' and accept opaque response.
+        let response;
+        try {
+            response = await fetch(RIDE9JA_BACKEND_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+        } catch (err) {
+            // Network or CORS failure; try no-cors as a last resort (will produce opaque response)
+            console.warn('CORS request failed, attempting no-cors fallback', err);
+            try {
+                response = await fetch(RIDE9JA_BACKEND_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+            } catch (err2) {
+                console.error('Both CORS and no-cors fetch attempts failed:', err2);
+                throw err2;
+            }
+        }
         
-        return { success: true, sheet: sheetName };
+        // If response is opaque (no-cors) or null, we can't inspect JSON; assume success in that case.
+        if (!response) {
+            return { success: true, sheet: sheetName, note: 'opaque/no-response' };
+        }
+        
+        // If fetch returned a Response object, try parsing JSON (if any)
+        let json = null;
+        try {
+            json = await response.json();
+        } catch (parseErr) {
+            // Response not JSON / opaque — ignore
+            json = null;
+        }
+        
+        // If response indicates failure, mark accordingly
+        if (response.ok) {
+            return { success: true, sheet: sheetName, response: json };
+        } else {
+            return { success: false, sheet: sheetName, status: response.status, response: json };
+        }
         
     } catch (error) {
         console.log('Database save failed, using fallback:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error && error.message ? error.message : String(error) };
     }
 }
 
 // Enhanced form handler - REPLACES OLD FORM HANDLERS
 async function handleRide9jaForm(form, userType) {
     const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
+    const originalText = submitBtn ? submitBtn.innerHTML : '';
     
     // Show loading
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Ride9ja...';
-    submitBtn.disabled = true;
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Ride9ja...';
+        submitBtn.disabled = true;
+    }
     
     // Collect all form data
     const formElements = form.elements;
@@ -901,28 +898,30 @@ async function handleRide9jaForm(form, userType) {
         
         if (result.success) {
             showSuccess(
-                `✅ Registration saved successfully!<br><br>` +
-                `<strong>Sheet:</strong> ${result.sheet}<br>` +
-                `<strong>Name:</strong> ${data.name || 'Not provided'}<br>` +
-                `<strong>Phone:</strong> ${data.phone || 'Not provided'}<br><br>` +
+                `✅ Registration saved successfully!\n\n` +
+                `Sheet: ${result.sheet}\n` +
+                `Name: ${data.name || 'Not provided'}\n` +
+                `Phone: ${data.phone || 'Not provided'}\n\n` +
                 `We'll contact you within 24 hours.`
             );
         } else {
             // Fallback: Show data and prompt for manual save
             showSuccess(
-                `📧 Registration ready!<br><br>` +
-                `<strong>Please save this info:</strong><br>` +
-                `Name: ${data.name || ''}<br>` +
-                `Phone: ${data.phone || ''}<br>` +
-                `Service: ${currentService === 'city' ? 'City Ride' : 'Interstate'}<br><br>` +
+                `📧 Registration ready!\n\n` +
+                `Please save this info:\n` +
+                `Name: ${data.name || ''}\n` +
+                `Phone: ${data.phone || ''}\n` +
+                `Service: ${currentService === 'city' ? 'City Ride' : 'Interstate'}\n\n` +
                 `Contact us at: hello@ride9ja.com`
             );
         }
         
         closeModal();
         form.reset();
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
         
     }, 1500);
 }
@@ -972,7 +971,7 @@ function setupRide9jaFormHandlers() {
 document.addEventListener('DOMContentLoaded', function() {
     // Your existing initialization code...
     
-    // ADD THIS LINE:
+    // Ensure Ride9ja form handlers are set up for the Google Sheets backend
     setupRide9jaFormHandlers();
     
     console.log('Ride9ja with Google Sheets backend ready!');
