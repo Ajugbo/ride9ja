@@ -782,52 +782,48 @@ document.addEventListener('DOMContentLoaded', function() {
 // Resilient save function using the RIDE9JA_BACKEND_URL constant
 async function saveToRide9jaDatabase(data, userType) {
     try {
-        // Determine table name based on user type
-        const tableName = userType === 'rider' 
-            ? (data.service === 'interstate' ? 'trips' : 'trips') // Both city and interstate trips go to trips table
-            : 'drivers'; // This would need to map to your actual tables
-        
         // Prepare data for Supabase
         const payload = {
-            action: 'create',
-            table: tableName,
-            data: {
-                ...data,
-                created_at: new Date().toISOString(),
-                user_type: userType,
-                service_type: data.service || currentService
-            }
+            userType: userType, // 'rider' or 'driver'
+            service: currentService, // 'city' or 'interstate'
+            name: data.name || data.cityName || data.interstateName || data.driverFullName || 'Unknown',
+            phone: data.phone || data.cityPhone || data.interstatePhone || data.driverPhone || '',
+            email: data.email || `${data.phone || data.cityPhone || data.interstatePhone || data.driverPhone || ''}@ride9ja.com`,
+            // Include other form data
+            ...data
         };
         
-        console.log('Saving to Supabase:', payload);
+        console.log('Sending to Supabase:', payload);
         
         // Make request to Supabase Edge Function
-        const response = await fetch(RIDE9JA_BACKEND_URL, {
+        const response = await fetch(`${RIDE9JA_BACKEND_URL}/api/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY' // Add your anon key
             },
             body: JSON.stringify(payload),
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
         const result = await response.json();
+        console.log('Supabase response:', result);
         
         return { 
             success: true, 
-            table: tableName, 
-            response: result 
+            data: result,
+            message: 'Registration successful!' 
         };
         
     } catch (error) {
         console.error('Supabase save failed:', error);
         return { 
             success: false, 
-            error: error.message 
+            error: error.message,
+            fallback: true // Enable fallback message
         };
     }
 }
