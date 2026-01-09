@@ -86,8 +86,7 @@ const heroStats = document.querySelector('.hero-stats');
 
 // ===== BACKEND URL CONSTANT =====
 // Replace this with your actual Apps Script "exec" URL (keep it quoted)
-const RIDE9JA_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbYFZjr9Is-ntYe_ILWl2nt1NrhwQCoaMjtRRu-PSIAf2v3kmpEk9IX4ufe0M94jj_Bo/exec';
-
+const RIDE9JA_BACKEND_URL = 'https://momffpyeifxtszkgyzrg.supabase.co/functions/v1/ride9ja-api';
 // ===== LOADING SCREEN =====
 window.addEventListener('load', () => {
     try {
