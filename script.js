@@ -782,196 +782,52 @@ document.addEventListener('DOMContentLoaded', function() {
 // Resilient save function using the RIDE9JA_BACKEND_URL constant
 async function saveToRide9jaDatabase(data, userType) {
     try {
-        // Determine which sheet to use
-        const sheetName = userType === 'rider' 
-            ? (data.service === 'interstate' ? 'Riders_Interstate' : 'Riders_City')
-            : 'Drivers';
+        // Determine table name based on user type
+        const tableName = userType === 'rider' 
+            ? (data.service === 'interstate' ? 'trips' : 'trips') // Both city and interstate trips go to trips table
+            : 'drivers'; // This would need to map to your actual tables
         
-        // Prepare data for Google Sheets
+        // Prepare data for Supabase
         const payload = {
-            ...data,
-            sheet: sheetName,
-            timestamp: new Date().toISOString()
+            action: 'create',
+            table: tableName,
+            data: {
+                ...data,
+                created_at: new Date().toISOString(),
+                user_type: userType,
+                service_type: data.service || currentService
+            }
         };
         
-        console.log('Saving to database:', payload);
+        console.log('Saving to Supabase:', payload);
         
-        // Attempt CORS request first. If your Apps Script returns proper CORS headers this will succeed.
-        // If it doesn't, you may need to fall back to 'no-cors' and accept opaque response.
-        let response;
-        try {
-            response = await fetch(RIDE9JA_BACKEND_URL, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-        } catch (err) {
-            // Network or CORS failure; try no-cors as a last resort (will produce opaque response)
-            console.warn('CORS request failed, attempting no-cors fallback', err);
-            try {
-                response = await fetch(RIDE9JA_BACKEND_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-            } catch (err2) {
-                console.error('Both CORS and no-cors fetch attempts failed:', err2);
-                throw err2;
-            }
+        // Make request to Supabase Edge Function
+        const response = await fetch(RIDE9JA_BACKEND_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY' // Add your anon key
+            },
+            body: JSON.stringify(payload),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // If response is opaque (no-cors) or null, we can't inspect JSON; assume success in that case.
-        if (!response) {
-            return { success: true, sheet: sheetName, note: 'opaque/no-response' };
-        }
+        const result = await response.json();
         
-        // If fetch returned a Response object, try parsing JSON (if any)
-        let json = null;
-        try {
-            json = await response.json();
-        } catch (parseErr) {
-            // Response not JSON / opaque — ignore
-            json = null;
-        }
-        
-        // If response indicates failure, mark accordingly
-        if (response.ok) {
-            return { success: true, sheet: sheetName, response: json };
-        } else {
-            return { success: false, sheet: sheetName, status: response.status, response: json };
-        }
+        return { 
+            success: true, 
+            table: tableName, 
+            response: result 
+        };
         
     } catch (error) {
-        console.log('Database save failed, using fallback:', error);
-        return { success: false, error: error && error.message ? error.message : String(error) };
+        console.error('Supabase save failed:', error);
+        return { 
+            success: false, 
+            error: error.message 
+        };
     }
 }
-
-// Enhanced form handler - REPLACES OLD FORM HANDLERS
-async function handleRide9jaForm(form, userType) {
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.innerHTML : '';
-    
-    // Show loading
-    if (submitBtn) {
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Ride9ja...';
-        submitBtn.disabled = true;
-    }
-    
-    // Collect all form data
-    const formElements = form.elements;
-    const data = {
-        service: currentService, // 'city' or 'interstate'
-        timestamp: new Date().toLocaleString('en-NG')
-    };
-    
-    // Extract all form fields
-    for (let element of formElements) {
-        if (element.name && element.value) {
-            data[element.name] = element.value;
-        }
-        if (element.id && element.value) {
-            data[element.id] = element.value;
-        }
-    }
-    
-    // Add name and phone if available
-    if (!data.name && form.querySelector('[name="name"]')) {
-        data.name = form.querySelector('[name="name"]').value;
-    }
-    if (!data.phone && form.querySelector('[name="phone"]')) {
-        data.phone = form.querySelector('[name="phone"]').value;
-    }
-    
-    console.log('Form data collected:', data);
-    
-    // Save to database
-    setTimeout(async () => {
-        const result = await saveToRide9jaDatabase(data, userType);
-        
-        if (result.success) {
-            showSuccess(
-                `✅ Registration saved successfully!\n\n` +
-                `Sheet: ${result.sheet}\n` +
-                `Name: ${data.name || 'Not provided'}\n` +
-                `Phone: ${data.phone || 'Not provided'}\n\n` +
-                `We'll contact you within 24 hours.`
-            );
-        } else {
-            // Fallback: Show data and prompt for manual save
-            showSuccess(
-                `📧 Registration ready!\n\n` +
-                `Please save this info:\n` +
-                `Name: ${data.name || ''}\n` +
-                `Phone: ${data.phone || ''}\n` +
-                `Service: ${currentService === 'city' ? 'City Ride' : 'Interstate'}\n\n` +
-                `Contact us at: hello@ride9ja.com`
-            );
-        }
-        
-        closeModal();
-        form.reset();
-        if (submitBtn) {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        }
-        
-    }, 1500);
-}
-
-// Update existing form listeners - REPLACE OLD setupFormHandlers
-function setupRide9jaFormHandlers() {
-    console.log('Setting up Ride9ja form handlers...');
-    
-    // City Rider Form
-    const cityRiderForm = document.getElementById('cityRiderForm');
-    if (cityRiderForm) {
-        cityRiderForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleRide9jaForm(this, 'rider');
-        });
-    }
-    
-    // Interstate Rider Form
-    const interstateRiderForm = document.getElementById('interstateRiderForm');
-    if (interstateRiderForm) {
-        interstateRiderForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleRide9jaForm(this, 'rider');
-        });
-    }
-    
-    // City Driver Form
-    const cityDriverForm = document.getElementById('cityDriverForm');
-    if (cityDriverForm) {
-        cityDriverForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleRide9jaForm(this, 'driver');
-        });
-    }
-    
-    // Interstate Driver Form
-    const interstateDriverForm = document.getElementById('interstateDriverForm');
-    if (interstateDriverForm) {
-        interstateDriverForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleRide9jaForm(this, 'driver');
-        });
-    }
-}
-
-// Initialize on page load - ADD THIS TO EXISTING DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Your existing initialization code...
-    
-    // Ensure Ride9ja form handlers are set up for the Google Sheets backend
-    setupRide9jaFormHandlers();
-    
-    console.log('Ride9ja with Google Sheets backend ready!');
-});
