@@ -3,51 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- SUPABASE LIBRARY -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Ride9ja - Safe & Affordable Rides Across Nigeria | City & Interstate</title>
-        <!-- SUPABASE LIBRARY -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <meta name="description" content="Nigeria's premier ride-sharing platform. Verified drivers, fixed fares. Travel within cities or between states safely.">
+    <title>Ride9ja - Safe & Affordable Rides</title>
     
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css?v=1.0">
-<link rel="preload" href="./style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="./style.css"></noscript>
-    <!-- CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%230066FF%22>🚗</text></svg>">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="Ride9ja - Safe Rides Across Nigeria">
-    <meta property="og:description" content="Verified drivers, fixed fares. City & interstate travel.">
-    <meta property="og:type" content="website">
+
+    <!-- SUPABASE LIBRARY (Required for Backend) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <i class="fas fa-car fa-bounce"></i>
-                <span class="logo-text">Ride<span class="logo-9">9</span>ja</span>
-            </div>
-            <div class="loading-road">
-                <div class="road-line"></div>
-                <div class="car-loading">
-                    <div class="car-body">
-                        <div class="car-stripe green"></div>
-                        <div class="car-stripe white"></div>
-                        <div class="car-stripe green"></div>
-                    </div>
-                </div>
-            </div>
-            <p class="loading-text">Loading safe journeys...</p>
-        </div>
-    </div>
-
+    
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -61,28 +31,12 @@
             </button>
             
             <div class="nav-menu" id="navMenu">
-                <a href="#home" class="nav-link active">
-                    <i class="fas fa-home"></i> Home
-                </a>
-                <a href="#city" class="nav-link">
-                    <i class="fas fa-city"></i> City Rides
-                </a>
-                <a href="#interstate" class="nav-link">
-                    <i class="fas fa-road"></i> Interstate
-                </a>
-                <a href="#how" class="nav-link">
-                    <i class="fas fa-question-circle"></i> How It Works
-                </a>
-                <a href="#safety" class="nav-link">
-                    <i class="fas fa-shield-alt"></i> Safety
-                </a>
+                <a href="#home" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+                <a href="#city" class="nav-link"><i class="fas fa-city"></i> City Rides</a>
+                <a href="#interstate" class="nav-link"><i class="fas fa-road"></i> Interstate</a>
                 <div class="nav-buttons">
-                    <button class="btn btn-outline" onclick="showRiderModal()">
-                        <i class="fas fa-user"></i> Find a Ride
-                    </button>
-                    <button class="btn btn-gold" onclick="showDriverModal()">
-                        <i class="fas fa-steering-wheel"></i> Drive with Us
-                    </button>
+                    <button class="btn btn-outline" onclick="window.showRiderModal('city')"><i class="fas fa-user"></i> Find a Ride</button>
+                    <button class="btn btn-gold" onclick="window.showDriverModal()"><i class="fas fa-steering-wheel"></i> Drive with Us</button>
                 </div>
             </div>
         </div>
@@ -90,362 +44,67 @@
 
     <!-- Hero Section -->
     <section class="hero" id="home">
-        <div class="hero-background">
-            <div class="road-texture">
-                <div class="lane-marking"></div>
-                <div class="lane-marking"></div>
-            </div>
-            <div class="gradient-overlay"></div>
-            
-            <!-- Animated Car -->
-            <div class="floating-car">
-                <div class="car-container">
-                    <div class="car">
-                        <div class="car-top">
-                            <div class="car-stripe stripe-green"></div>
-                            <div class="car-stripe stripe-white"></div>
-                            <div class="car-stripe stripe-green"></div>
-                        </div>
-                        <div class="car-body">
-                            <div class="car-gold-accent"></div>
-                            <div class="car-window"></div>
-                        </div>
-                        <div class="car-wheels">
-                            <div class="wheel"></div>
-                            <div class="wheel"></div>
-                        </div>
-                    </div>
-                    <div class="car-shadow"></div>
-                </div>
-            </div>
-        </div>
-        
         <div class="container">
             <div class="hero-content">
                 <h1 class="hero-title">
                     <span class="title-line">Travel <span class="highlight-gold">Safe</span>,</span>
                     <span class="title-line">Across <span class="highlight-purple">Nigeria</span></span>
                 </h1>
-                
                 <p class="hero-subtitle">
-                    Nigeria's <span class="text-gold">premium</span> ride-sharing platform. 
-                    <span class="text-blue">Verified drivers</span>, 
-                    <span class="text-purple">fixed fares</span>. 
-                    City commutes or interstate journeys.
+                    Nigeria's premium ride-sharing platform. Verified drivers, fixed fares.
                 </p>
-                
-                <div class="service-badges">
-                    <div class="badge badge-city">
-                        <i class="fas fa-building"></i>
-                        <div>
-                            <h4>Ride9ja City</h4>
-                            <p>₦100 per ride • Max 4 passengers</p>
-                        </div>
-                    </div>
-                    <div class="badge badge-interstate">
-                        <i class="fas fa-route"></i>
-                        <div>
-                            <h4>Ride9ja Interstate</h4>
-                            <p>10% rider fee • 5% driver fee</p>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="hero-buttons">
-                    <button class="btn btn-blue btn-lg" onclick="showRiderModal('city')">
-                        <i class="fas fa-search-location"></i>
-                        <div>
-                            <span>Find City Ride</span>
-                            <small>From ₦800 • Pay ₦100 fee</small>
-                        </div>
+                    <button class="btn btn-blue btn-lg" onclick="window.showRiderModal('city')">
+                        <i class="fas fa-search-location"></i> <span>Find City Ride</span>
                     </button>
-                    <button class="btn btn-purple btn-lg" onclick="showRiderModal('interstate')">
-                        <i class="fas fa-road"></i>
-                        <div>
-                            <span>Book Interstate</span>
-                            <small>Abuja-Lagos • Pay 10% fee</small>
-                        </div>
+                    <button class="btn btn-purple btn-lg" onclick="window.showRiderModal('interstate')">
+                        <i class="fas fa-road"></i> <span>Book Interstate</span>
                     </button>
-                    <button class="btn btn-gold btn-lg" onclick="showDriverModal()">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <div>
-                            <span>Earn as Driver</span>
-                            <small>₦3,000+ per trip</small>
-                        </div>
-                    </button>
-                </div>
-                
-                <div class="hero-stats">
-                    <div class="stat">
-                        <h3><span class="counter" data-target="12500">0</span>+</h3>
-                        <p>Happy Travelers</p>
-                    </div>
-                    <div class="stat">
-                        <h3>₦<span class="counter" data-target="8">0</span>M+</h3>
-                        <p>Saved</p>
-                    </div>
-                    <div class="stat">
-                        <h3><span class="counter" data-target="24">0</span>+</h3>
-                        <p>States Covered</p>
-                    </div>
-                    <div class="stat">
-                        <h3><span class="counter" data-target="99">0</span>%</h3>
-                        <p>Safety Rating</p>
-                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="scroll-indicator">
-            <i class="fas fa-chevron-down"></i>
         </div>
     </section>
 
-    <!-- City Rides Section -->
-    <section class="section-city" id="city">
+    <!-- City Section -->
+    <section class="section" id="city">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-city"></i>
-                    <span>Ride9ja <span class="text-blue">City</span></span>
-                </h2>
-                <p class="section-subtitle">Safe, affordable rides within Nigerian cities. Perfect for daily commute.</p>
-            </div>
-            
-            <div class="city-features">
+            <h2>🏙️ Ride9ja City</h2>
+            <p>Safe, affordable rides within Nigerian cities. Max 4 passengers.</p>
+            <div class="feature-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-naira-sign"></i>
-                    </div>
                     <h3>Fixed Fares</h3>
-                    <p>Same price every day. No surprises.</p>
-                    <ul class="feature-list">
-                        <li>Nyanya → CBD: <strong>₦800</strong></li>
-                        <li>Kubwa → CBD: <strong>₦1,000</strong></li>
-                        <li>Mararaba → CBD: <strong>₦900</strong></li>
-                    </ul>
+                    <p>₦800 - ₦1000 per trip. No surprises.</p>
                 </div>
-                
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>Max 4 Passengers</h3>
-                    <p>No overcrowding. Comfort guaranteed.</p>
-                    <ul class="feature-list">
-                        <li>Leg space for everyone</li>
-                        <li>Safe seating arrangement</li>
-                        <li>Personal bag space</li>
-                    </ul>
+                    <h3>Verified Drivers</h3>
+                    <p>All drivers pass background checks.</p>
                 </div>
-                
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Platform Fee: ₦100</h3>
-                    <p>Pay once per ride. Driver pays ₦200.</p>
-                    <ul class="feature-list">
-                        <li>Rider: <strong>₦100</strong> per ride</li>
-                        <li>Driver: <strong>₦200</strong> per trip</li>
-                        <li>Driver earns: <strong>₦3,000+</strong></li>
-                    </ul>
+                    <h3>₦100 Fee</h3>
+                    <p>Small booking fee to support the platform.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Interstate Section -->
-    <section class="section-interstate" id="interstate">
+    <section class="section bg-light" id="interstate">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-route"></i>
-                    <span>Ride9ja <span class="text-purple">Interstate</span></span>
-                </h2>
-                <p class="section-subtitle">Safe long-distance travel between Nigerian states. Verified drivers only.</p>
-            </div>
-            
-            <div class="interstate-features">
+            <h2>🛣️ Ride9ja Interstate</h2>
+            <p>Safe long-distance travel between Nigerian states.</p>
+            <div class="feature-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <h3>Fair Commission</h3>
-                    <p>Percentage-based fees for long trips.</p>
-                    <ul class="feature-list">
-                        <li>Rider pays: <strong>10%</strong> of fare</li>
-                        <li>Driver pays: <strong>5%</strong> of total</li>
-                        <li>Example: ₦15,000 fare</li>
-                    </ul>
+                    <h3>10% Rider Fee</h3>
+                    <p>Small commission on top of base fare.</p>
                 </div>
-                
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-calculator"></i>
-                    </div>
                     <h3>Smart Earnings</h3>
-                    <p>Drivers earn more with full cars.</p>
-                    <ul class="feature-list">
-                        <li>Abuja → Lagos: <strong>₦15,000</strong></li>
-                        <li>4 riders: <strong>₦60,000</strong> total</li>
-                        <li>Driver net: <strong>₦57,000</strong></li>
-                    </ul>
+                    <p>Drivers earn ₦3,000+ per full car.</p>
                 </div>
-                
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-map-marked-alt"></i>
-                    </div>
-                    <h3>Popular Routes</h3>
-                    <p>Travel between major cities safely.</p>
-                    <ul class="feature-list">
-                        <li>Abuja ↔ Lagos</li>
-                        <li>Port Harcourt ↔ Abuja</li>
-                        <li>Kano ↔ Kaduna</li>
-                        <li>Ibadan ↔ Lagos</li>
-                    </ul>
+                    <h3>Verified Only</h3>
+                    <p>Only verified drivers for interstate trips.</p>
                 </div>
-            </div>
-            
-            <div class="pricing-example">
-                <h3><i class="fas fa-coins"></i> Example Trip: Abuja to Lagos</h3>
-                <div class="pricing-breakdown">
-                    <div class="pricing-item">
-                        <span>Base Fare per Rider</span>
-                        <strong>₦15,000</strong>
-                    </div>
-                    <div class="pricing-item">
-                        <span>Rider Fee (10%)</span>
-                        <strong class="text-blue">+₦1,500</strong>
-                    </div>
-                    <div class="pricing-item total">
-                        <span>Rider Pays Total</span>
-                        <strong class="text-gold">₦16,500</strong>
-                    </div>
-                    <div class="pricing-item">
-                        <span>Driver with 4 Riders</span>
-                        <strong>₦60,000</strong>
-                    </div>
-                    <div class="pricing-item">
-                        <span>Driver Fee (5%)</span>
-                        <strong class="text-purple">-₦3,000</strong>
-                    </div>
-                    <div class="pricing-item total">
-                        <span>Driver Earns Net</span>
-                        <strong class="text-gold">₦57,000</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="section-how" id="how">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-play-circle"></i>
-                    How Ride9ja Works
-                </h2>
-            </div>
-            
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <h3>Register & Verify</h3>
-                    <p>Sign up in 2 minutes. Verify your phone number.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-icon">
-                        <i class="fas fa-search-location"></i>
-                    </div>
-                    <h3>Find Your Ride</h3>
-                    <p>Select City or Interstate. Choose your route.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-icon">
-                        <i class="fas fa-car-side"></i>
-                    </div>
-                    <h3>Travel Safe</h3>
-                    <p>Meet verified driver. Enjoy comfortable ride.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <div class="step-icon">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <h3>Rate & Repeat</h3>
-                    <p>Rate your experience. Build travel history.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Safety Section -->
-    <section class="section-safety" id="safety">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-shield-alt"></i>
-                    Your Safety is Our Priority
-                </h2>
-            </div>
-            
-            <div class="safety-features">
-                <div class="safety-card">
-                    <i class="fas fa-id-card"></i>
-                    <h3>Verified IDs</h3>
-                    <p>All drivers verified with valid licenses and vehicle papers.</p>
-                </div>
-                
-                <div class="safety-card">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <h3>Trip Tracking</h3>
-                    <p>Share real-time location with family members.</p>
-                </div>
-                
-                <div class="safety-card">
-                    <i class="fas fa-phone-alt"></i>
-                    <h3>24/7 Support</h3>
-                    <p>Emergency contact available round the clock.</p>
-                </div>
-                
-                <div class="safety-card">
-                    <i class="fas fa-user-shield"></i>
-                    <h3>Background Checks</h3>
-                    <p>Comprehensive screening for all drivers.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="section-cta">
-        <div class="container">
-            <div class="cta-content">
-                <h2>Ready to Travel Better?</h2>
-                <p>Join thousands of Nigerians enjoying safe, affordable rides daily.</p>
-                <div class="cta-buttons">
-                    <button class="btn btn-blue btn-xl" onclick="showRiderModal()">
-                        <i class="fas fa-user-plus"></i> I Need a Ride
-                    </button>
-                    <button class="btn btn-gold btn-xl" onclick="showDriverModal()">
-                        <i class="fas fa-steering-wheel"></i> I'm a Driver
-                    </button>
-                </div>
-                <p class="cta-note">
-                    <i class="fas fa-info-circle"></i>
-                    Available in Abuja, Lagos, Port Harcourt, Kano & 20+ other cities
-                </p>
             </div>
         </div>
     </section>
@@ -453,55 +112,11 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <div class="logo">
-                        <i class="fas fa-car"></i>
-                        <span>Ride<span class="logo-9">9</span>ja</span>
-                    </div>
-                    <p class="footer-tagline">Making Nigerian roads safer, one ride at a time.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                    </div>
-                </div>
-                
-                <div class="footer-links">
-                    <div class="link-group">
-                        <h4>Services</h4>
-                        <a href="#city">City Rides</a>
-                        <a href="#interstate">Interstate Travel</a>
-                        <a href="#safety">Safety Features</a>
-                    </div>
-                    
-                    <div class="link-group">
-                        <h4>Company</h4>
-                        <a href="#">About Us</a>
-                        <a href="#">Careers</a>
-                        <a href="#">Contact</a>
-                    </div>
-                    
-                    <div class="link-group">
-                        <h4>Legal</h4>
-                        <a href="#">Terms of Service</a>
-                        <a href="#">Privacy Policy</a>
-                        <a href="#">Safety Guidelines</a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 Ride9ja Transport Services. All rights reserved.</p>
-                <p>Contact: <a href="mailto:hello@ride9ja.com">hello@ride9ja.com</a> | Lagos • Abuja • Nationwide</p>
-            </div>
+            <p>&copy; 2024 Ride9ja Transport Services. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- MODALS WILL BE ADDED IN FILE 2 (CSS) AND FILE 3 (JS) -->
-
-    <!-- JavaScript -->
+    <!-- JAVASCRIPT LOGIC -->
     <script src="script.js"></script>
 </body>
 </html>
