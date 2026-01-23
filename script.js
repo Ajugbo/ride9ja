@@ -1,829 +1,147 @@
-// ===== RIDE9JA - JAVASCRIPT =====
-// Complete functionality for City & Interstate services
+// ==========================================
+// 1. CONFIGURATION & INIT
+// ==========================================
 
-console.log('🚗 Ride9ja - Safe Travels Across Nigeria');
-// ===== MOBILE MENU =====
-document.addEventListener('DOMContentLoaded', function() {
-    const navToggle = document.getElementById('navToggle');
-    const navMenu = document.getElementById('navMenu');
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    if (navToggle && navMenu) {
-        // Toggle menu on button click
-        navToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            navMenu.classList.toggle('active');
-            this.setAttribute('aria-expanded', navMenu.classList.contains('active'));
-            this.innerHTML = navMenu.classList.contains('active') 
-                ? '<i class="fas fa-times"></i>' 
-                : '<i class="fas fa-bars"></i>';
-        });
-        
-        // Close menu when clicking a link
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('active');
-                navToggle.innerHTML = '<i class="fas fa-bars"></i>';
-                navToggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!navMenu.contains(e.target) && !navToggle.contains(e.target)) {
-                navMenu.classList.remove('active');
-                navToggle.innerHTML = '<i class="fas fa-bars"></i>';
-                navToggle.setAttribute('aria-expanded', 'false');
-            }
-        });
-        
-        // Close menu with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && navMenu.classList.contains('active')) {
-                navMenu.classList.remove('active');
-                navToggle.innerHTML = '<i class="fas fa-bars"></i>';
-                navToggle.setAttribute('aria-expanded', 'false');
-            }
-        });
-        
-        console.log('Mobile menu initialized');
+// Supabase Connection
+const URL = 'https://ryaaqozgpmuysjayomdd.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YWFxb3pncG11eXNqYXlvbWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTk5ODMsImV4cCI6MjA4NDU5NTk4M30.MOtDemq56FMUizveP1WC2KJ-2YGIwknduVsxcn8DTBc';
+const sb = window.supabase.createClient(URL, KEY);
+
+// Loading Screen Logic
+window.addEventListener('load', () => {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) {
+        setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }, 1500); // 1.5 seconds delay
     }
 });
-// ===== MOBILE MENU FIX =====
-document.addEventListener('DOMContentLoaded', function() {
-    const navToggle = document.getElementById('navToggle');
-    const navMenu = document.getElementById('navMenu');
-    
-    if (navToggle && navMenu) {
-        navToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-            this.innerHTML = navMenu.classList.contains('active') 
-                ? '<i class="fas fa-times"></i>' 
-                : '<i class="fas fa-bars"></i>';
-        });
-        
-        // Close menu when clicking a link
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('active');
-                navToggle.innerHTML = '<i class="fas fa-bars"></i>';
-            });
-        });
-        
-        console.log('Mobile menu initialized');
-    }
-});
-// ===== GLOBAL VARIABLES =====
-let currentService = 'city'; // 'city' or 'interstate'
 
-// ===== DOM ELEMENTS =====
-const loadingScreen = document.getElementById('loadingScreen');
+// ==========================================
+// 2. MOBILE NAVIGATION
+// ==========================================
 const navToggle = document.getElementById('navToggle');
 const navMenu = document.getElementById('navMenu');
-const navLinks = document.querySelectorAll('.nav-link');
-const counters = document.querySelectorAll('.counter');
-const heroStats = document.querySelector('.hero-stats');
 
-// ===== BACKEND URL CONSTANT =====
-// Replace this with your actual Apps Script "exec" URL (keep it quoted)
-const RIDE9JA_BACKEND_URL = 'https://momffpyeifxtszkgyzrg.supabase.co/functions/v1/ride9ja-api';
-// ===== LOADING SCREEN =====
-window.addEventListener('load', () => {
-    try {
-        if (loadingScreen) {
-            setTimeout(() => {
-                loadingScreen.classList.add('fade-out');
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    if (typeof initAnimations === 'function') initAnimations();
-                    console.log('✅ Website loaded successfully');
-                }, 500);
-            }, 1500);
-        } else {
-            // No loading screen present — still init animations
-            if (typeof initAnimations === 'function') initAnimations();
-            console.log('✅ Website loaded (no loadingScreen element found)');
-        }
-    } catch (err) {
-        console.error('Error during load handler:', err);
-        if (loadingScreen) loadingScreen.style.display = 'none';
-        if (typeof initAnimations === 'function') initAnimations();
-    }
-});
-
-// Safety fallback: hide loader after 8s to avoid indefinite hang
-setTimeout(() => {
-    const ls = document.getElementById('loadingScreen');
-    if (ls && window.getComputedStyle(ls).display !== 'none') {
-        ls.style.display = 'none';
-        console.warn('Loader fallback: hiding loading screen after timeout');
-    }
-}, 8000);
-
-// ===== MOBILE NAVIGATION =====
-navToggle?.addEventListener('click', () => {
+navToggle.addEventListener('click', () => {
     navMenu.classList.toggle('active');
-    navToggle.innerHTML = navMenu.classList.contains('active') 
-        ? '<i class="fas fa-times"></i>' 
-        : '<i class="fas fa-bars"></i>';
 });
 
-// Close menu when clicking a link
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-        navToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        
-        // Update active link
-        navLinks.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-    });
-});
+// ==========================================
+// 3. MODAL & BOOKING LOGIC (The Backend)
+// ==========================================
 
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!navMenu.contains(e.target) && !navToggle.contains(e.target)) {
-        navMenu.classList.remove('active');
-        navToggle.innerHTML = '<i class="fas fa-bars"></i>';
-    }
-});
+// Create Modal Elements dynamically if they don't exist
+function createModal() {
+    // Check if modal already exists
+    if(document.getElementById('bookingModal')) return;
 
-// ===== ANIMATE COUNTERS =====
-function initAnimations() {
-    if (!heroStats) return;
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                animateCounters();
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.5 });
-    
-    observer.observe(heroStats);
-}
-
-function animateCounters() {
-    counters.forEach(counter => {
-        const target = parseInt(counter.getAttribute('data-target'));
-        const increment = target / 50;
-        let current = 0;
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
-            counter.textContent = Math.floor(current);
-        }, 30);
-    });
-}
-
-// ===== MODAL SYSTEM =====
-// Create modal elements dynamically
-function createModals() {
     const modalHTML = `
-        <!-- Rider Modal -->
-        <div class="modal-overlay" id="riderModal">
-            <div class="modal-container">
+        <div id="bookingModal" class="modal-overlay">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h2><i class="fas fa-user-plus"></i> Find a Ride</h2>
-                    <button class="modal-close" onclick="closeModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <h3>🚖 Book Your Ride</h3>
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
                 </div>
-                
-                <div class="modal-tabs">
-                    <button class="tab-btn active" onclick="switchService('city')">
-                        <i class="fas fa-city"></i> City Ride
-                    </button>
-                    <button class="tab-btn" onclick="switchService('interstate')">
-                        <i class="fas fa-route"></i> Interstate
-                    </button>
-                </div>
-                
-                <div class="modal-body">
-                    <!-- City Ride Form -->
-                    <form id="cityRiderForm" class="rider-form active">
-                        <div class="form-group">
-                            <label for="cityName">
-                                <i class="fas fa-user"></i> Full Name
-                            </label>
-                            <input type="text" id="cityName" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cityPhone">
-                                <i class="fas fa-phone"></i> Phone Number
-                            </label>
-                            <input type="tel" id="cityPhone" placeholder="08012345678" pattern="[0-9]{11}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cityRoute">
-                                <i class="fas fa-route"></i> Select Route
-                            </label>
-                            <select id="cityRoute" required>
-                                <option value="">Choose your route</option>
-                                <option value="nyanya-cbd">Nyanya ↔ Abuja CBD</option>
-                                <option value="kubwa-cbd">Kubwa ↔ Abuja CBD</option>
-                                <option value="mararaba-cbd">Mararaba ↔ Abuja CBD</option>
-                                <option value="gwarimpa-cbd">Gwarimpa ↔ Abuja CBD</option>
-                                <option value="lekki-ikeja">Lekki ↔ Ikeja (Lagos)</option>
-                                <option value="other">Other City Route</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cityTime">
-                                <i class="fas fa-clock"></i> Preferred Time
-                            </label>
-                            <input type="time" id="cityTime" required>
-                        </div>
-                        
-                        <div class="form-info">
-                            <p><i class="fas fa-info-circle"></i> Platform fee: <strong>₦100</strong> per ride</p>
-                            <p><i class="fas fa-car"></i> Maximum: <strong>4 passengers</strong> per car</p>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-blue btn-block">
-                            <i class="fas fa-search"></i> Find City Ride
-                        </button>
-                    </form>
+                <form id="bookingForm">
+                    <label>Full Name</label>
+                    <input type="text" id="pName" placeholder="Enter your name" required>
                     
-                    <!-- Interstate Form -->
-                    <form id="interstateRiderForm" class="rider-form">
-                        <div class="form-group">
-                            <label for="interstateName">
-                                <i class="fas fa-user"></i> Full Name
-                            </label>
-                            <input type="text" id="interstateName" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="interstatePhone">
-                                <i class="fas fa-phone"></i> Phone Number
-                            </label>
-                            <input type="tel" id="interstatePhone" placeholder="08012345678" pattern="[0-9]{11}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="fromLocation">
-                                <i class="fas fa-map-marker-alt"></i> From
-                            </label>
-                            <select id="fromLocation" required>
-                                <option value="">Departure City</option>
-                                <option value="abuja">Abuja (FCT)</option>
-                                <option value="lagos">Lagos</option>
-                                <option value="portharcourt">Port Harcourt</option>
-                                <option value="kano">Kano</option>
-                                <option value="ibadan">Ibadan</option>
-                                <option value="enugu">Enugu</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="toLocation">
-                                <i class="fas fa-flag"></i> To
-                            </label>
-                            <select id="toLocation" required>
-                                <option value="">Destination City</option>
-                                <option value="lagos">Lagos</option>
-                                <option value="abuja">Abuja (FCT)</option>
-                                <option value="portharcourt">Port Harcourt</option>
-                                <option value="kano">Kano</option>
-                                <option value="ibadan">Ibadan</option>
-                                <option value="enugu">Enugu</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="travelDate">
-                                <i class="fas fa-calendar"></i> Travel Date
-                            </label>
-                            <input type="date" id="travelDate" required>
-                        </div>
-                        
-                        <div class="form-info">
-                            <p><i class="fas fa-percentage"></i> Rider fee: <strong>10%</strong> of fare</p>
-                            <p><i class="fas fa-users"></i> Driver fee: <strong>5%</strong> of total fares</p>
-                            <p><i class="fas fa-car"></i> Verified interstate drivers only</p>
-                        </div>
-                        
-                        <div class="fare-estimate">
-                            <h4><i class="fas fa-calculator"></i> Estimated Fare</h4>
-                            <div class="fare-breakdown">
-                                <div class="fare-item">
-                                    <span>Base Fare</span>
-                                    <strong>₦15,000</strong>
-                                </div>
-                                <div class="fare-item">
-                                    <span>Platform Fee (10%)</span>
-                                    <strong class="text-blue">+₦1,500</strong>
-                                </div>
-                                <div class="fare-item total">
-                                    <span>You Pay</span>
-                                    <strong class="text-gold">₦16,500</strong>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-purple btn-block">
-                            <i class="fas fa-road"></i> Book Interstate Ride
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Driver Modal -->
-        <div class="modal-overlay" id="driverModalOverlay">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h2><i class="fas fa-steering-wheel"></i> Drive with Ride9ja</h2>
-                    <button class="modal-close" onclick="closeModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="modal-tabs">
-                    <button class="tab-btn active" onclick="switchDriverService('city')">
-                        <i class="fas fa-city"></i> City Driver
-                    </button>
-                    <button class="tab-btn" onclick="switchDriverService('interstate')">
-                        <i class="fas fa-route"></i> Interstate Driver
-                    </button>
-                </div>
-                
-                <div class="modal-body">
-                    <!-- City Driver Form -->
-                    <form id="cityDriverForm" class="driver-form active">
-                        <div class="form-group">
-                            <label for="driverFullName">
-                                <i class="fas fa-user"></i> Full Name
-                            </label>
-                            <input type="text" id="driverFullName" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="driverPhone">
-                                <i class="fas fa-phone"></i> Phone Number
-                            </label>
-                            <input type="tel" id="driverPhone" placeholder="08012345678" pattern="[0-9]{11}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="driverLicense">
-                                <i class="fas fa-id-card"></i> Driver's License
-                            </label>
-                            <input type="text" id="driverLicense" placeholder="DL-12345678" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="carModel">
-                                <i class="fas fa-car"></i> Car Model & Year
-                            </label>
-                            <input type="text" id="carModel" placeholder="e.g., Toyota Camry 2018" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="plateNumber">
-                                <i class="fas fa-hashtag"></i> Plate Number
-                            </label>
-                            <input type="text" id="plateNumber" placeholder="ABC123XYZ" required>
-                        </div>
-                        
-                        <div class="form-info">
-                            <h4><i class="fas fa-money-bill-wave"></i> Earnings Potential</h4>
-                            <div class="earnings-breakdown">
-                                <div class="earning-item">
-                                    <span>Per Rider Fare</span>
-                                    <strong>₦800</strong>
-                                </div>
-                                <div class="earning-item">
-                                    <span>Full Car (4 riders)</span>
-                                    <strong>₦3,200</strong>
-                                </div>
-                                <div class="earning-item">
-                                    <span>Platform Fee</span>
-                                    <strong class="text-blue">-₦200</strong>
-                                </div>
-                                <div class="earning-item total">
-                                    <span>You Earn Net</span>
-                                    <strong class="text-gold">₦3,000</strong>
-                                </div>
-                            </div>
-                            <p><i class="fas fa-info-circle"></i> Platform fee: <strong>₦200</strong> per trip</p>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-blue btn-block">
-                            <i class="fas fa-check-circle"></i> Apply as City Driver
-                        </button>
-                    </form>
+                    <label>Pickup Location</label>
+                    <input type="text" id="pPickup" placeholder="e.g. Lekki Phase 1" required>
                     
-                    <!-- Interstate Driver Form -->
-                    <form id="interstateDriverForm" class="driver-form">
-                        <div class="form-group">
-                            <label for="interstateDriverName">
-                                <i class="fas fa-user"></i> Full Name
-                            </label>
-                            <input type="text" id="interstateDriverName" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="interstateDriverPhone">
-                                <i class="fas fa-phone"></i> Phone Number
-                            </label>
-                            <input type="tel" id="interstateDriverPhone" placeholder="08012345678" pattern="[0-9]{11}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="interstateLicense">
-                                <i class="fas fa-id-card"></i> Driver's License
-                            </label>
-                            <input type="text" id="interstateLicense" placeholder="DL-12345678" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="interstateCarModel">
-                                <i class="fas fa-car"></i> Car Model & Year
-                            </label>
-                            <input type="text" id="interstateCarModel" placeholder="e.g., Toyota Sienna 2020" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="primaryRoute">
-                                <i class="fas fa-route"></i> Primary Route
-                            </label>
-                            <select id="primaryRoute" required>
-                                <option value="">Select your main route</option>
-                                <option value="abuja-lagos">Abuja ↔ Lagos</option>
-                                <option value="ph-abuja">Port Harcourt ↔ Abuja</option>
-                                <option value="kano-kaduna">Kano ↔ Kaduna</option>
-                                <option value="ibadan-lagos">Ibadan ↔ Lagos</option>
-                                <option value="enugu-lagos">Enugu ↔ Lagos</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-info">
-                            <h4><i class="fas fa-money-bill-wave"></i> Interstate Earnings</h4>
-                            <div class="earnings-breakdown">
-                                <div class="earning-item">
-                                    <span>Abuja-Lagos Fare/Rider</span>
-                                    <strong>₦15,000</strong>
-                                </div>
-                                <div class="earning-item">
-                                    <span>Full Car (4 riders)</span>
-                                    <strong>₦60,000</strong>
-                                </div>
-                                <div class="earning-item">
-                                    <span>Platform Fee (5%)</span>
-                                    <strong class="text-purple">-₦3,000</strong>
-                                </div>
-                                <div class="earning-item total">
-                                    <span>You Earn Net</span>
-                                    <strong class="text-gold">₦57,000</strong>
-                                </div>
-                            </div>
-                            <p><i class="fas fa-info-circle"></i> Platform fee: <strong>5%</strong> of total fares</p>
-                            <p><i class="fas fa-shield-alt"></i> Additional verification required for interstate</p>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-purple btn-block">
-                            <i class="fas fa-check-circle"></i> Apply as Interstate Driver
-                        </button>
-                    </form>
-                </div>
+                    <label>Dropoff Location</label>
+                    <input type="text" id="pDropoff" placeholder="e.g. Victoria Island" required>
+                    
+                    <button type="submit" class="btn btn-blue">Confirm Booking</button>
+                </form>
             </div>
         </div>
-
-        <!-- Success Modal -->
-        <div class="modal-overlay success-modal-overlay" id="successModalOverlay">
-            <div class="modal-container success-modal-container">
-                <div class="success-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h2>Registration Successful!</h2>
-                <p id="successMessage">Thank you for joining Ride9ja. We'll contact you within 24 hours to complete verification.</p>
-                <button class="btn btn-gold" onclick="closeModal()">
-                    <i class="fas fa-thumbs-up"></i> Continue Browsing
-                </button>
-            </div>
-        </div>
+        <style>
+            /* Modal Styles */
+            .modal-overlay {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;
+            }
+            .modal-overlay.active { display: flex; }
+            .modal-content {
+                background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; position: relative;
+            }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+            .modal-header h3 { color: #008751; margin: 0; }
+            .close-btn { font-size: 24px; cursor: pointer; color: #888; }
+            .modal-content label { display: block; margin-bottom: 5px; font-weight: 600; }
+            .modal-content input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+            .modal-content button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        </style>
     `;
-    
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    setupRide9jaFormHandlers();
 }
 
-// ===== MODAL FUNCTIONS =====
-function showRiderModal(service = 'city') {
-    currentService = service;
-    const modal = document.getElementById('riderModal');
-    if (!modal) {
-        createModals();
-        setTimeout(() => showRiderModal(service), 100);
-        return;
-    }
-    
-    switchService(service);
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    console.log(`Opening rider modal for ${service} service`);
+window.showRiderModal = function(type) {
+    createModal();
+    const modal = document.getElementById('bookingModal');
+    if (modal) modal.classList.add('active');
 }
 
-function showDriverModal(service = 'city') {
-    currentService = service;
-    const modal = document.getElementById('driverModalOverlay');
-    if (!modal) {
-        createModals();
-        setTimeout(() => showDriverModal(service), 100);
-        return;
-    }
-    
-    switchDriverService(service);
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    console.log(`Opening driver modal for ${service} service`);
+window.showDriverModal = function() {
+    alert("Driver registration is coming soon! Contact support@ride9ja.com");
 }
 
-function closeModal() {
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-        modal.style.display = 'none';
-    });
-    document.body.style.overflow = 'auto';
-    console.log('All modals closed');
+window.closeModal = function() {
+    const modal = document.getElementById('bookingModal');
+    if (modal) modal.classList.remove('active');
 }
 
-function switchService(service) {
-    currentService = service;
-    
-    // Update tabs
-    document.querySelectorAll('.modal-tabs .tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const activeTab = document.querySelector(`.modal-tabs .tab-btn:nth-child(${service === 'city' ? 1 : 2})`);
-    if (activeTab) activeTab.classList.add('active');
-    
-    // Update forms
-    document.querySelectorAll('.rider-form').forEach(form => {
-        form.classList.remove('active');
-    });
-    
-    const activeForm = document.getElementById(`${service}RiderForm`);
-    if (activeForm) activeForm.classList.add('active');
-    
-    console.log(`Switched to ${service} service`);
-}
+// ==========================================
+// 4. HANDLE BOOKING SUBMIT (The Magic)
+// ==========================================
 
-function switchDriverService(service) {
-    currentService = service;
-    
-    // Update tabs
-    const tabs = document.querySelectorAll('#driverModalOverlay .tab-btn');
-    tabs.forEach(btn => btn.classList.remove('active'));
-    
-    const activeTab = document.querySelector(`#driverModalOverlay .tab-btn:nth-child(${service === 'city' ? 1 : 2})`);
-    if (activeTab) activeTab.classList.add('active');
-    
-    // Update forms
-    document.querySelectorAll('.driver-form').forEach(form => {
-        form.classList.remove('active');
-    });
-    
-    const activeForm = document.getElementById(`${service}DriverForm`);
-    if (activeForm) activeForm.classList.add('active');
-}
+document.addEventListener('submit', async (e) => {
+    if (e.target.id === 'bookingForm') {
+        e.preventDefault(); // Stop page reload
 
-// ===== FORM HANDLING (original simple handlers kept where used) =====
-function handleCityRiderSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finding Rides...';
-    submitBtn.disabled = true;
-    
-    setTimeout(() => {
-        closeModal();
-        showSuccess('City ride request submitted! We\'ll match you with a driver shortly.');
-        form.reset();
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }, 1500);
-}
+        const name = document.getElementById('pName').value;
+        const pickup = document.getElementById('pPickup').value;
+        const dropoff = document.getElementById('pDropoff').value;
 
-function handleInterstateRiderSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking Interstate...';
-    submitBtn.disabled = true;
-    
-    setTimeout(() => {
-        closeModal();
-        showSuccess('Interstate booking received! Our team will contact you to confirm details.');
-        form.reset();
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }, 1500);
-}
+        // UI Feedback
+        const submitBtn = e.target.querySelector('button');
+        const originalText = submitBtn.innerText;
+        submitBtn.innerText = "Processing...";
+        submitBtn.disabled = true;
 
-function handleCityDriverSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    submitBtn.disabled = true;
-    
-    setTimeout(() => {
-        closeModal();
-        showSuccess('City driver application submitted! We\'ll contact you within 24 hours for verification.');
-        form.reset();
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }, 1500);
-}
+        try {
+            // 1. Add Passenger
+            const { data: passenger } = await sb.from('passengers').insert([{ full_name: name }]).select().single();
 
-function handleInterstateDriverSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    submitBtn.disabled = true;
-    
-    setTimeout(() => {
-        closeModal();
-        showSuccess('Interstate driver application received! Our verification team will contact you soon.');
-        form.reset();
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }, 1500);
-}
+            if (passenger) {
+                // 2. Add Booking
+                const { error } = await sb.from('bookings').insert([{
+                    passenger_id: passenger.id,
+                    pickup_location: pickup,
+                    dropoff_location: dropoff,
+                    price: 2500, // Fixed price
+                    status: 'pending'
+                }]);
 
-function showSuccess(message) {
-    const successModal = document.getElementById('successModalOverlay');
-    const successMessage = document.getElementById('successMessage');
-    
-    if (successMessage) {
-        successMessage.textContent = message;
-    }
-    
-    if (successModal) {
-        successModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-// ===== SERVICE SELECTION =====
-function selectCityService() {
-    document.querySelectorAll('.service-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    const selector = document.querySelector('[onclick="selectCityService()"]');
-    if (selector) selector.classList.add('active');
-    
-    document.querySelectorAll('.service-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    const cityContent = document.getElementById('cityContent');
-    if (cityContent) cityContent.classList.add('active');
-}
-
-function selectInterstateService() {
-    document.querySelectorAll('.service-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    const selector = document.querySelector('[onclick="selectInterstateService()"]');
-    if (selector) selector.classList.add('active');
-    
-    document.querySelectorAll('.service-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    const interstateContent = document.getElementById('interstateContent');
-    if (interstateContent) interstateContent.classList.add('active');
-}
-
-// ===== UTILITY FUNCTIONS =====
-function formatCurrency(amount) {
-    return '₦' + amount.toLocaleString('en-NG');
-}
-
-function calculateInterstateFare(baseFare, passengers = 1) {
-    const riderFee = baseFare * 0.10; // 10%
-    const driverFee = (baseFare * passengers) * 0.05; // 5%
-    const riderTotal = baseFare + riderFee;
-    const driverTotal = (baseFare * passengers) - driverFee;
-    
-    return {
-        riderTotal: formatCurrency(riderTotal),
-        driverTotal: formatCurrency(driverTotal),
-        riderFee: formatCurrency(riderFee),
-        driverFee: formatCurrency(driverFee)
-    };
-}
-
-// ===== INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Ride9ja initialized');
-    
-    // Set today's date as min for date inputs
-    const today = new Date().toISOString().split('T')[0];
-    const dateInputs = document.querySelectorAll('input[type="date"]');
-    dateInputs.forEach(input => {
-        input.min = today;
-    });
-    
-    // Auto-create modals on page load
-    createModals();
-});
-
-// ===== GLOBAL EXPORTS =====
-window.showRiderModal = showRiderModal;
-window.showDriverModal = showDriverModal;
-window.closeModal = closeModal;
-window.switchService = switchService;
-window.switchDriverService = switchDriverService;
-window.selectCityService = selectCityService;
-window.selectInterstateService = selectInterstateService;
-window.formatCurrency = formatCurrency;
-window.calculateInterstateFare = calculateInterstateFare;
-
-console.log('Ride9ja JavaScript loaded successfully');
-
-// ===== FORM SUBMISSION FIX (robust handler replacer) =====
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Setting up form handlers...');
-    
-    // Setup form submissions when modals are shown
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('[onclick*="showRiderModal"]') || 
-            e.target.closest('[onclick*="showDriverModal"]')) {
-            setTimeout(setupRide9jaFormHandlers, 100);
+                if (!error) {
+                    alert("✅ Success! Your ride request has been sent to a driver.");
+                    closeModal();
+                    e.target.reset(); // Clear form
+                } else {
+                    alert("❌ Error saving booking: " + error.message);
+                }
+            }
+        } catch (err) {
+            alert("❌ System Error: " + err.message);
+        } finally {
+            // Reset Button
+            submitBtn.innerText = originalText;
+            submitBtn.disabled = false;
         }
-    });
-    
-    // Initial setup
-    setupRide9jaFormHandlers();
-});
-
-
-// ===== RIDE9JA: Google Sheets / Backend integration =====
-// Resilient save function using the RIDE9JA_BACKEND_URL constant
-async function saveToRide9jaDatabase(data, userType) {
-    try {
-        // Prepare data for Supabase
-        const payload = {
-            userType: userType, // 'rider' or 'driver'
-            service: currentService, // 'city' or 'interstate'
-            name: data.name || data.cityName || data.interstateName || data.driverFullName || 'Unknown',
-            phone: data.phone || data.cityPhone || data.interstatePhone || data.driverPhone || '',
-            email: data.email || `${data.phone || data.cityPhone || data.interstatePhone || data.driverPhone || ''}@ride9ja.com`,
-            // Include other form data
-            ...data
-        };
-        
-        console.log('Sending to Supabase:', payload);
-        
-        // Make request to Supabase Edge Function
-        const response = await fetch(`${RIDE9JA_BACKEND_URL}/api/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('Supabase response:', result);
-        
-        return { 
-            success: true, 
-            data: result,
-            message: 'Registration successful!' 
-        };
-        
-    } catch (error) {
-        console.error('Supabase save failed:', error);
-        return { 
-            success: false, 
-            error: error.message,
-            fallback: true // Enable fallback message
-        };
     }
-}
+});
