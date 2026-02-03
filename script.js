@@ -1,5 +1,5 @@
 // ==========================================
-// 1. DEBUG MODE (Tells us what is happening)
+// 1. DEBUG MODE
 // ==========================================
 alert("Step 1: JavaScript is Running");
 
@@ -8,27 +8,31 @@ alert("Step 1: JavaScript is Running");
 // ==========================================
 const URL = 'https://ryaaqozgpmuysjayomdd.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YWFxb3pncG11eXNqYXlvbWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTk5ODMsImV4cCI6MjA4NDU5NTk4M30.MOtDemq56FMUizveP1WC2KJ-2YGIwknduVsxcn8DTBc';
-let sb;
+let sb; // Initialize as undefined
 
 // ==========================================
-// 3. STARTUP & LOADING SCREEN FIX
+// 3. CONNECT TO DATABASE (Safe Mode)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Remove Loading Screen Immediately
+    // Remove Loading Screen
     const loader = document.getElementById('loadingScreen');
-    if (loader) {
-        loader.remove();
-        console.log('Loading screen removed');
-    }
+    if (loader) loader.remove();
 
-    // Check if Supabase Library is Loaded
+    // Check Library
     if (window.supabase) {
         alert("Step 2: Supabase Library Found!");
-        sb = window.supabase.createClient(URL, KEY);
-        alert("Step 3: Connected to Database!");
+        
+        // Wrap connection in Try/Catch to catch the crash
+        try {
+            sb = window.supabase.createClient(URL, KEY);
+            alert("Step 3: Connected to Database!");
+        } catch (crashError) {
+            alert("CRASH DETECTED: " + crashError.message);
+            alert("Check URL or KEY for typos.");
+        }
     } else {
-        alert("Step 2 FAILED: Supabase Library NOT Found. Check index.html");
+        alert("Step 2 FAILED: Supabase library missing.");
     }
 });
 
@@ -60,6 +64,7 @@ function createModals() {
                 <div class="modal-body">
                     <form id="cityForm">
                         <div class="form-group"><label>Name</label><input type="text" id="cName" required></div>
+                        <div class="form-group"><label>Route</label><input type="text" id="cRoute" required></div>
                         <button type="submit" class="btn-blue">Book City Ride</button>
                     </form>
                 </div>
@@ -80,7 +85,7 @@ window.closeModal = function() {
 }
 
 window.showDriverModal = function() {
-    alert("Driver registration coming soon");
+    alert("Driver coming soon");
 }
 
 // ==========================================
@@ -89,29 +94,37 @@ window.showDriverModal = function() {
 async function handleCitySubmit(e) {
     e.preventDefault();
     
+    // Check if 'sb' was actually created
     if(!sb) {
-        alert("Error: Database not connected. Check previous alerts.");
+        alert("CRITICAL: 'sb' is null. The connection crashed at Step 3.");
         return;
     }
 
     const name = document.getElementById('cName').value;
-    
+    const route = document.getElementById('cRoute').value;
+    const btn = e.target.querySelector('button');
+
+    btn.innerText = "Processing...";
+    btn.disabled = true;
+
     try {
         const { data: passenger } = await sb.from('passengers').insert([{ full_name: name }]).select().single();
-        
         if (passenger) {
             await sb.from('bookings').insert([{
                 passenger_id: passenger.id,
-                pickup_location: 'Route 1',
+                pickup_location: route,
                 dropoff_location: 'CBD',
                 price: 2500,
                 status: 'pending'
             }]);
-            alert("✅ Success! Ride Booked.");
+            alert("✅ Ride Booked!");
             window.closeModal();
             e.target.reset();
         }
     } catch (err) {
-        alert("System Error: " + err.message);
+        alert("Database Error: " + err.message);
+    } finally {
+        btn.innerText = "Book City Ride";
+        btn.disabled = false;
     }
 }
