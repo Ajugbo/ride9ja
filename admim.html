@@ -3,23 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ride9ja Admin - URL Fixer</title>
+    <title>Ride9ja Admin (Safe Config)</title>
     <!-- SUPABASE LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #008751; --primary-dark: #00663d; --bg-light: #f4f7f6; --text-dark: #2c3e50; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        :root { --primary: #008751; --primary-dark: #00663d; --bg-light: #f4f7f6; --text-dark: #2c3e50; --card-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; }
         aside { width: 260px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
-        .brand { font-size: 28px; font-weight: 800; margin-bottom: 50px; }
+        .brand { font-size: 28px; font-weight: 800; margin-bottom: 50px; display: flex; align-items: center; gap: 10px; }
         main { flex: 1; padding: 40px; overflow-y: auto; }
-        .panel { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 40px; }
+        h1 { margin-bottom: 30px; color: var(--primary-dark); font-size: 32px; }
+        
+        .panel { background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); margin-bottom: 40px; }
+        .panel h2 { margin-bottom: 25px; font-size: 22px; color: var(--primary-dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+        
         table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        th { text-align: left; padding: 15px; color: #718096; font-weight: 700; }
+        th { text-align: left; padding: 15px; color: #718096; font-weight: 700; font-size: 13px; text-transform: uppercase; }
         td { background: #fff; padding: 18px 15px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-        input[type="text"] { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; margin-bottom: 15px; }
+        
+        input[type="text"], input[type="password"] { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; margin-bottom: 15px; }
+        
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; background: var(--primary); }
+        .btn:hover { background: var(--primary-dark); }
         .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .settings-btn { background: #333; margin-bottom: 20px; }
+        
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .bg-green { background: #d1fae5; color: #065f46; }
         .bg-red { background: #fee2e2; color: #991b1b; }
@@ -28,89 +37,116 @@
 <body>
 
     <aside>
-        <div class="brand">🚖 Admin Fixer</div>
-        <div>System Check</div>
+        <div class="brand">🚖 Admin</div>
+        <button class="btn settings-btn" onclick="showSettings()">⚙️ Settings (URL/Key)</button>
+        <div>Database Status: <strong id="dbStatus">Not Connected</strong></div>
     </aside>
 
     <main>
-        <h1>URL Diagnostics</h1>
+        <h1 id="pageTitle">Please Connect to Database</h1>
         
-        <div class="panel">
-            <h2>Current Config</h2>
-            <p><strong>Raw URL:</strong> <code id="rawUrlDisplay">...</code></p>
-            <p><strong>Length:</strong> <span id="urlLength">...</span></p>
-            <p><strong>Starts with https:</strong> <span id="urlCheck">...</span></p>
+        <!-- DATA VIEW (Hidden until connected) -->
+        <div id="dataView" style="display: none;">
+            <div class="panel">
+                <h2>Bookings</h2>
+                <table>
+                    <thead><tr><th>ID</th><th>Passenger</th><th>Status</th></tr></thead>
+                    <tbody id="bookingTable"></tbody>
+                </table>
+            </div>
+            <div class="panel">
+                <h2>Drivers</h2>
+                <table>
+                    <thead><tr><th>Name</th><th>Verified</th></tr></thead>
+                    <tbody id="driverTable"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="panel">
-            <h2>Manual Test</h2>
-            <label>Paste URL here to test connection directly:</label>
-            <input type="text" id="manualUrl" value="https://ryaaqozgpmuysjayomdd.supabase.co">
-            <button class="btn" onclick="testManualUrl()">Test This URL</button>
-        </div>
-
-        <div class="panel">
-            <h2>Data</h2>
-            <table>
-                <thead><tr><th>ID</th><th>Passenger</th><th>Status</th></tr></thead>
-                <tbody id="bookingTable"></tbody>
-            </table>
+        <!-- SETTINGS MODAL (Always hidden until button clicked) -->
+        <div id="settingsModal" class="panel" style="display: none;">
+            <h2>⚙️ Database Configuration</h2>
+            <p>Paste your Supabase URL and Key here. This bypasses copy-paste errors.</p>
+            
+            <label><strong>Supabase URL</strong></label>
+            <input type="text" id="configUrl" placeholder="https://...">
+            
+            <label><strong>Supabase Anon Key</strong></label>
+            <input type="text" id="configKey" placeholder="eyJ...">
+            
+            <button class="btn" onclick="saveConfig()">Connect to Database</button>
+            <button class="btn" style="background: #e74c3c; margin-top: 10px;" onclick="closeSettings()">Cancel</button>
         </div>
     </main>
 
     <script>
-        const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YWFxb3pncG11eXNqYXlvbWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTk5ODMsImV4cCI6MjA4NDU5NTk4M30.MOtDemq56FMUizveP1WC2KJ-2YGIwknduVsxcn8DTBc';
+        // State
         let sb = null;
+        let URL = '';
+        let KEY = '';
 
-        // 1. RUN DIAGNOSTICS
-        window.addEventListener('load', () => {
-            const rawUrl = 'https://ryaaqozgpmuysjayomdd.supabase.co';
-            
-            // Display Data
-            document.getElementById('rawUrlDisplay').textContent = rawUrl;
-            document.getElementById('urlLength').textContent = rawUrl.length;
-            document.getElementById('urlCheck').textContent = rawUrl.startsWith('https') ? "✅ YES" : "❌ NO";
+        // Show Settings
+        function showSettings() {
+            document.getElementById('dataView').style.display = 'none';
+            document.getElementById('settingsModal').style.display = 'block';
+            document.getElementById('pageTitle').textContent = 'Configuration';
+        }
 
-            // Check for invisible characters (like newlines from chat)
-            if (rawUrl.includes('\n')) {
-                alert("WARNING: Your URL contains 'Enter/Newline' characters.");
+        // Hide Settings
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        // Save Config (The Magic)
+        async function saveConfig() {
+            URL = document.getElementById('configUrl').value;
+            KEY = document.getElementById('configKey').value;
+
+            if(!URL || !KEY) {
+                alert("Please fill in both URL and Key");
+                return;
             }
 
-            // Try Auto-Connect
-            try {
-                if (window.supabase) {
-                    sb = window.supabase.createClient(rawUrl, KEY);
-                    alert("✅ AUTO-CONNECT SUCCESSFUL!");
+            // Trim whitespace (removes spaces at ends)
+            URL = URL.trim();
+            KEY = KEY.trim();
+
+            if (window.supabase) {
+                try {
+                    sb = window.supabase.createClient(URL, KEY);
+                    alert("✅ Connection Successful!");
+                    document.getElementById('dbStatus').textContent = "Online";
+                    document.getElementById('dbStatus').style.color = "green";
+                    closeSettings();
+                    document.getElementById('dataView').style.display = 'block';
+                    document.getElementById('pageTitle').textContent = 'Dashboard';
                     loadData();
-                } else {
-                    alert("Library Missing");
+                } catch (e) {
+                    alert("CRASH: " + e.message);
                 }
-            } catch(e) {
-                alert("AUTO-CONNECT FAILED: " + e.message);
-            }
-        });
-
-        // 2. MANUAL TEST FUNCTION
-        async function testManualUrl() {
-            const urlInput = document.getElementById('manualUrl').value;
-            if (!urlInput) return alert("Paste URL in box first");
-
-            try {
-                sb = window.supabase.createClient(urlInput, KEY);
-                alert("✅ MANUAL TEST SUCCESSFUL!");
-                loadData();
-            } catch (e) {
-                alert("❌ MANUAL TEST FAILED: " + e.message);
+            } else {
+                alert("Library not found.");
             }
         }
 
-        // 3. DATA LOADER
+        // Load Data
         async function loadData() {
-            const { data } = await sb.from('bookings').select('*, passengers(full_name)');
-            const table = document.getElementById('bookingTable');
-            table.innerHTML = '';
-            data.forEach(b => {
-                table.innerHTML += `<tr><td>#${b.id}</td><td>${b.passengers?.full_name}</td><td>${b.status}</td></tr>`;
+            if(!sb) return;
+
+            const { data: bookings } = await sb.from('bookings').select('*, passengers(full_name)');
+            const { data: drivers } = await sb.from('drivers').select('*');
+
+            // Render
+            const bTable = document.getElementById('bookingTable');
+            bTable.innerHTML = '';
+            bookings.forEach(b => {
+                bTable.innerHTML += `<tr><td>#${b.id}</td><td>${b.passengers?.full_name}</td><td><span class="badge ${b.status==='pending'?'bg-red':'bg-green'}">${b.status}</span></td></tr>`;
+            });
+
+            const dTable = document.getElementById('driverTable');
+            dTable.innerHTML = '';
+            drivers.forEach(d => {
+                dTable.innerHTML += `<tr><td>${d.full_name}</td><td><span class="badge ${d.is_verified?'bg-green':'bg-red'}">${d.is_verified?'Yes':'No'}</span></td></tr>`;
             });
         }
     </script>
