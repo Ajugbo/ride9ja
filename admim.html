@@ -3,152 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ride9ja Admin (Safe Config)</title>
+    <title>Ride9ja Admin Dashboard</title>
+    
     <!-- SUPABASE LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        :root { --primary: #008751; --primary-dark: #00663d; --bg-light: #f4f7f6; --text-dark: #2c3e50; --card-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        :root { 
+            --primary: #008751; 
+            --primary-dark: #00663d;
+            --accent: #ffcc00;
+            --bg-light: #f0f2f5; 
+            --text-dark: #1a202c; 
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; }
-        aside { width: 260px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
+        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- Sidebar --- */
+        aside { 
+            width: 260px; 
+            background: linear-gradient(180deg, #009c5e 0%, #00663d 100%);
+            color: white; 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
         .brand { font-size: 28px; font-weight: 800; margin-bottom: 50px; display: flex; align-items: center; gap: 10px; }
+        
+        nav button { 
+            background: transparent; 
+            border: none; 
+            color: rgba(255,255,255,0.8); 
+            width: 100%; 
+            padding: 15px; 
+            text-align: left; 
+            cursor: pointer; 
+            margin-bottom: 8px; 
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        nav button:hover { background: rgba(255,255,255,0.15); transform: translateX(5px); }
+        nav button.active { background: var(--white); color: var(--primary); font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .settings-area { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; }
+        .btn-settings { color: rgba(255,255,255,0.6); font-size: 14px; cursor: pointer; text-align: left; width: 100%; padding: 10px; background: none; border: none; }
+        .btn-settings:hover { color: white; }
+
+        /* --- Main Content --- */
         main { flex: 1; padding: 40px; overflow-y: auto; }
         h1 { margin-bottom: 30px; color: var(--primary-dark); font-size: 32px; }
-        
-        .panel { background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); margin-bottom: 40px; }
+
+        /* --- Stats Cards --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px; }
+        .stat-card { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: var(--card-shadow); border-top: 5px solid transparent; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-value { font-size: 42px; font-weight: 800; margin: 10px 0; color: var(--text-dark); }
+        .stat-label { color: #718096; font-size: 14px; font-weight: 600; text-transform: uppercase; }
+        .stat-card:nth-child(1) { border-color: var(--accent); }
+        .stat-card:nth-child(2) { border-color: #4299e1; }
+        .stat-card:nth-child(3) { border-color: var(--primary); }
+
+        /* --- Panels --- */
+        .panel { background: var(--white); padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); margin-bottom: 40px; }
         .panel h2 { margin-bottom: 25px; font-size: 22px; color: var(--primary-dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
         
+        /* --- Tables --- */
         table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
         th { text-align: left; padding: 15px; color: #718096; font-weight: 700; font-size: 13px; text-transform: uppercase; }
         td { background: #fff; padding: 18px 15px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        td:first-child { border-left: 1px solid #e2e8f0; border-radius: 8px 0 0 8px; }
+        td:last-child { border-right: 1px solid #e2e8f0; border-radius: 0 8px 8px 0; }
+
+        /* --- Forms & Inputs --- */
+        .input-group { margin-bottom: 15px; display: flex; gap: 10px; }
+        input[type="text"] { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; flex-grow: 1; }
+        input[type="text"]:focus { border-color: var(--primary); }
         
-        input[type="text"], input[type="password"] { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; margin-bottom: 15px; }
-        
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; background: var(--primary); }
+        /* --- Buttons --- */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; background: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s; }
         .btn:hover { background: var(--primary-dark); }
         .btn-sm { padding: 5px 10px; font-size: 12px; }
-        .settings-btn { background: #333; margin-bottom: 20px; }
         
-        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        /* --- Badges --- */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .bg-green { background: #d1fae5; color: #065f46; }
         .bg-red { background: #fee2e2; color: #991b1b; }
+
+        /* --- Connect Modal --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 20px 25px rgba(0,0,0,0.2); }
+        .modal-content h2 { margin-bottom: 20px; color: var(--primary); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="brand">🚖 Admin</div>
-        <button class="btn settings-btn" onclick="showSettings()">⚙️ Settings (URL/Key)</button>
-        <div>Database Status: <strong id="dbStatus">Not Connected</strong></div>
+        <div class="brand">🚖 Ride9ja Admin</div>
+        <nav>
+            <button class="active">📊 Dashboard</button>
+        </nav>
+        <div class="settings-area">
+            <button class="btn-settings" onclick="showConnectModal()">⚙️ Settings (URL/Key)</button>
+        </div>
     </aside>
 
     <main>
-        <h1 id="pageTitle">Please Connect to Database</h1>
+        <h1>Dashboard</h1>
         
-        <!-- DATA VIEW (Hidden until connected) -->
-        <div id="dataView" style="display: none;">
-            <div class="panel">
-                <h2>Bookings</h2>
-                <table>
-                    <thead><tr><th>ID</th><th>Passenger</th><th>Status</th></tr></thead>
-                    <tbody id="bookingTable"></tbody>
-                </table>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Revenue</div>
+                <div class="stat-value" id="stat-revenue">₦0</div>
             </div>
-            <div class="panel">
-                <h2>Drivers</h2>
-                <table>
-                    <thead><tr><th>Name</th><th>Verified</th></tr></thead>
-                    <tbody id="driverTable"></tbody>
-                </table>
+            <div class="stat-card">
+                <div class="stat-label">Active Rides</div>
+                <div class="stat-value" id="stat-active">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Drivers</div>
+                <div class="stat-value" id="stat-drivers">0</div>
             </div>
         </div>
 
-        <!-- SETTINGS MODAL (Always hidden until button clicked) -->
-        <div id="settingsModal" class="panel" style="display: none;">
-            <h2>⚙️ Database Configuration</h2>
-            <p>Paste your Supabase URL and Key here. This bypasses copy-paste errors.</p>
+        <!-- Bookings -->
+        <div class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2>Recent Bookings</h2>
+                <button class="btn btn-sm" onclick="resetConnection()">Reset Connection</button>
+            </div>
             
-            <label><strong>Supabase URL</strong></label>
-            <input type="text" id="configUrl" placeholder="https://...">
-            
-            <label><strong>Supabase Anon Key</strong></label>
-            <input type="text" id="configKey" placeholder="eyJ...">
-            
-            <button class="btn" onclick="saveConfig()">Connect to Database</button>
-            <button class="btn" style="background: #e74c3c; margin-top: 10px;" onclick="closeSettings()">Cancel</button>
+            <div class="input-group">
+                <input type="text" id="bookingInput" placeholder="Type Passenger Name here...">
+                <button class="btn" onclick="addBooking()">+ Add Booking</button>
+            </div>
+            <br>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Passenger</th><th>Pickup</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody id="booking-table"></tbody>
+            </table>
+        </div>
+
+        <!-- Drivers -->
+        <div class="panel">
+            <h2>Driver Management</h2>
+            <div class="input-group">
+                <input type="text" id="driverInput" placeholder="Type Driver Name here...">
+                <button class="btn" onclick="addDriver()">+ Add Driver</button>
+            </div>
+            <br>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Status</th><th>Verified</th><th>Action</th></tr>
+                </thead>
+                <tbody id="driver-table"></tbody>
+            </table>
         </div>
     </main>
 
+    <!-- Connection Modal (The Manual Entry Fix) -->
+    <div class="modal-overlay" id="connectModal">
+        <div class="modal-content">
+            <h2>⚙️ Connect to Database</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                Enter your Supabase URL and Key manually to fix connection errors.
+            </p>
+            <div class="form-group">
+                <label>Supabase URL</label>
+                <input type="text" id="urlInput" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Supabase Anon Key</label>
+                <input type="text" id="keyInput" placeholder="eyJ...">
+            </div>
+            <div class="form-actions">
+                <button class="btn" style="flex:1" onclick="saveConnection()">Connect</button>
+                <button class="btn" style="background: #999;" onclick="hideConnectModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // State
-        let sb = null;
-        let URL = '';
-        let KEY = '';
+        // ==========================================
+        // 1. CONFIGURATION (Smart Storage)
+        // ==========================================
+        let sb;
+        const STORAGE_URL = 'r9_url';
+        const STORAGE_KEY = 'r9_key';
 
-        // Show Settings
-        function showSettings() {
-            document.getElementById('dataView').style.display = 'none';
-            document.getElementById('settingsModal').style.display = 'block';
-            document.getElementById('pageTitle').textContent = 'Configuration';
+        // ==========================================
+        // 2. INITIALIZATION (Check if connected)
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUrl = localStorage.getItem(STORAGE_URL);
+            const savedKey = localStorage.getItem(STORAGE_KEY);
+
+            if (savedUrl && savedKey) {
+                // Auto-connect if keys exist
+                connectToDatabase(savedUrl, savedKey);
+            } else {
+                // Show modal if keys missing
+                document.getElementById('connectModal').classList.add('active');
+            }
+        });
+
+        // ==========================================
+        // 3. CONNECTION LOGIC
+        // ==========================================
+        function showConnectModal() {
+            document.getElementById('connectModal').classList.add('active');
         }
 
-        // Hide Settings
-        function closeSettings() {
-            document.getElementById('settingsModal').style.display = 'none';
+        function hideConnectModal() {
+            document.getElementById('connectModal').classList.remove('active');
         }
 
-        // Save Config (The Magic)
-        async function saveConfig() {
-            URL = document.getElementById('configUrl').value;
-            KEY = document.getElementById('configKey').value;
+        function saveConnection() {
+            const url = document.getElementById('urlInput').value.trim();
+            const key = document.getElementById('keyInput').value.trim();
 
-            if(!URL || !KEY) {
-                alert("Please fill in both URL and Key");
+            if(!url || !key) {
+                alert("Please enter both URL and Key.");
                 return;
             }
 
-            // Trim whitespace (removes spaces at ends)
-            URL = URL.trim();
-            KEY = KEY.trim();
-
-            if (window.supabase) {
-                try {
-                    sb = window.supabase.createClient(URL, KEY);
-                    alert("✅ Connection Successful!");
-                    document.getElementById('dbStatus').textContent = "Online";
-                    document.getElementById('dbStatus').style.color = "green";
-                    closeSettings();
-                    document.getElementById('dataView').style.display = 'block';
-                    document.getElementById('pageTitle').textContent = 'Dashboard';
-                    loadData();
-                } catch (e) {
-                    alert("CRASH: " + e.message);
-                }
-            } else {
-                alert("Library not found.");
+            try {
+                // Test connection
+                const testClient = window.supabase.createClient(url, key);
+                // If it doesn't crash, save it
+                localStorage.setItem(STORAGE_URL, url);
+                localStorage.setItem(STORAGE_KEY, key);
+                connectToDatabase(url, key);
+                hideConnectModal();
+                alert("✅ Connected successfully!");
+            } catch (e) {
+                alert("❌ Connection Failed: Invalid URL or Key.");
             }
         }
 
-        // Load Data
+        function resetConnection() {
+            if(confirm("This will clear your saved database keys. Are you sure?")) {
+                localStorage.removeItem(STORAGE_URL);
+                localStorage.removeItem(STORAGE_KEY);
+                window.location.reload();
+            }
+        }
+
+        function connectToDatabase(url, key) {
+            sb = window.supabase.createClient(url, key);
+            loadData();
+        }
+
+        // ==========================================
+        // 4. DATA LOGIC
+        // ==========================================
         async function loadData() {
-            if(!sb) return;
+            const { data: bookings, error: bError } = await sb
+                .from('bookings')
+                .select('*, passengers(full_name)'); 
 
-            const { data: bookings } = await sb.from('bookings').select('*, passengers(full_name)');
-            const { data: drivers } = await sb.from('drivers').select('*');
+            const { data: drivers, error: dError } = await sb
+                .from('drivers')
+                .select('*');
 
-            // Render
-            const bTable = document.getElementById('bookingTable');
-            bTable.innerHTML = '';
+            if (bError) console.error('Booking Error:', bError);
+            if (dError) console.error('Driver Error:', dError);
+
+            renderBookings(bookings || []);
+            renderDrivers(drivers || []);
+            updateStats(bookings || [], drivers || []);
+        }
+
+        // ==========================================
+        // 5. RENDER FUNCTIONS
+        // ==========================================
+        function renderBookings(bookings) {
+            const tbody = document.getElementById('booking-table');
+            tbody.innerHTML = '';
             bookings.forEach(b => {
-                bTable.innerHTML += `<tr><td>#${b.id}</td><td>${b.passengers?.full_name}</td><td><span class="badge ${b.status==='pending'?'bg-red':'bg-green'}">${b.status}</span></td></tr>`;
-            });
+                const passengerName = b.passengers ? b.passengers.full_name : 'Guest';
+                let statusClass = b.status === 'pending' ? 'bg-red' : 'bg-green';
+                let actionBtn = '';
+                
+                if(b.status === 'pending') {
+                    actionBtn = `<button class="btn btn-sm" onclick="cancelBooking(${b.id})">Cancel</button>`;
+                }
 
-            const dTable = document.getElementById('driverTable');
-            dTable.innerHTML = '';
-            drivers.forEach(d => {
-                dTable.innerHTML += `<tr><td>${d.full_name}</td><td><span class="badge ${d.is_verified?'bg-green':'bg-red'}">${d.is_verified?'Yes':'No'}</span></td></tr>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${b.id}</td>
+                        <td>${passengerName}</td>
+                        <td>${b.pickup_location}</td>
+                        <td><span class="badge ${statusClass}">${b.status}</span></td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
             });
         }
+
+        function renderDrivers(drivers) {
+            const tbody = document.getElementById('driver-table');
+            tbody.innerHTML = '';
+            drivers.forEach(d => {
+                const verifiedBadge = d.is_verified 
+                    ? `<span class="badge bg-green">Yes</span>` 
+                    : `<span class="badge bg-red">No</span>`;
+                let actionBtn = '';
+                
+                if (!d.is_verified) {
+                    actionBtn = `<button class="btn btn-sm" onclick="verifyDriver(${d.id})">Verify</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${d.full_name}</td>
+                        <td>${d.status}</td>
+                        <td>${verifiedBadge}</td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateStats(bookings, drivers) {
+            document.getElementById('stat-active').textContent = bookings.filter(b => b.status === 'pending').length;
+            document.getElementById('stat-drivers').textContent = drivers.length;
+        }
+
+        // ==========================================
+        // 6. ACTIONS
+        // ==========================================
+        async function addBooking() {
+            const input = document.getElementById('bookingInput');
+            const passengerName = input.value;
+            if(!passengerName) return alert("Type a passenger name!");
+
+            const { data: p } = await sb.from('passengers').insert([{ full_name: passengerName }]).select().single();
+            if(p) {
+                await sb.from('bookings').insert([{
+                    passenger_id: p.id,
+                    pickup_location: 'Route 1',
+                    dropoff_location: 'CBD',
+                    price: 2500,
+                    status: 'pending'
+                }]);
+                showToast("Booking Created!");
+                input.value = '';
+                loadData();
+            }
+        }
+
+        async function addDriver() {
+            const input = document.getElementById('driverInput');
+            const name = input.value;
+            if(!name) return alert("Type a driver name!");
+
+            await sb.from('drivers').insert([{
+                full_name: name,
+                status: 'offline'
+            }]);
+            showToast("Driver Added!");
+            input.value = '';
+            loadData();
+        }
+
+        async function verifyDriver(id) {
+            await sb.from('drivers').update({ is_verified: true }).eq('id', id);
+            showToast("Driver Verified!");
+            loadData();
+        }
+
+        async function cancelBooking(id) {
+            await sb.from('bookings').update({ status: 'cancelled' }).eq('id', id);
+            showToast("Booking Cancelled");
+            loadData();
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = "position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 24px; border-radius:8px; animation: slideIn 0.3s forwards;";
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+        document.head.appendChild(style);
+
     </script>
 </body>
 </html>
