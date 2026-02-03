@@ -119,5 +119,327 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script src="script.js"></script>
+    <!-- ========================================== -->
+<!-- RIDE9JA ADMIN PANEL (Integrated) -->
+<!-- ========================================== -->
+
+<style>
+    #admin-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-light); z-index: 5000; display: none; }
+    #admin-overlay.active { display: block; }
+    
+    /* Admin Styles (Same as before) */
+    .admin-layout { display: flex; height: 100vh; }
+    .admin-sidebar { width: 260px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
+    .admin-main { flex: 1; padding: 40px; overflow-y: auto; }
+    .admin-panel { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 40px; }
+    .admin-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    .admin-table th { text-align: left; padding: 15px; color: #718096; font-weight: 700; font-size: 13px; text-transform: uppercase; }
+    .admin-table td { background: #fff; padding: 18px 15px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+    .admin-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .bg-green { background: #d1fae5; color: #065f46; }
+    .bg-red { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div id="admin-overlay">
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div style="font-size: 28px; font-weight: 800; margin-bottom: 50px;">🚖 Admin</div>
+            <button class="btn" style="color: white; background: transparent; text-align: left;" onclick="closeAdmin()">❌ Close Admin</button>
+        </aside>
+        <main class="admin-main">
+            <h1>Dashboard</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>Revenue</div>
+                    <div class="stat-value" id="adm-revenue">₦0</div>
+                </div>
+                <div class="stat-card">
+                    <div>Active Rides</div>
+                    <div class="stat-value" id="adm-active">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>Total Drivers</div>
+                    <div class="stat-value" id="adm-drivers">0</div>
+                </div>
+            </div>
+
+            <div class="admin-panel">
+                <div style="display: flex; justify-content: space-between;">
+                    <h2>Recent Bookings</h2>
+                    <button class="btn" onclick="admAddMock()">+ Add Booking</button>
+                </div>
+                <table class="admin-table">
+                    <thead><tr><th>ID</th><th>Passenger</th><th>Status</th></tr></thead>
+                    <tbody id="adm-bookings-table"></tbody>
+                </table>
+            </div>
+
+            <div class="admin-panel">
+                <h2>Driver Management</h2>
+                <button class="btn" onclick="admAddDriver()">+ Add Driver</button>
+                <br><br>
+                <table class="admin-table">
+                    <thead><tr><th>Name</th><th>Status</th><th>Verified</th><th>Action</th></tr></thead>
+                    <tbody id="adm-drivers-table"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // INTEGRATED ADMIN LOGIC
+    // ==========================================
+
+    // 1. Open Admin
+    function openAdmin() {
+        document.getElementById('admin-overlay').classList.add('active');
+        loadAdminData();
+    }
+
+    function closeAdmin() {
+        document.getElementById('admin-overlay').classList.remove('active');
+    }
+
+    // 2. Load Data (Uses Global 'sb' from script.js)
+    async function loadAdminData() {
+        if (typeof sb === 'undefined') {
+            alert("Error: Database not connected. Script.js may not have loaded.");
+            return;
+        }
+
+        const { data: bookings } = await sb.from('bookings').select('*, passengers(full_name)');
+        const { data: drivers } = await sb.from('drivers').select('*');
+
+        renderAdmBookings(bookings || []);
+        renderAdmDrivers(drivers || []);
+        updateAdmStats(bookings || [], drivers || []);
+    }
+
+    // 3. Render Functions
+    function renderAdmBookings(bookings) {
+        const tbody = document.getElementById('adm-bookings-table');
+        tbody.innerHTML = '';
+        bookings.forEach(b => {
+            const name = b.passengers ? b.passengers.full_name : 'Guest';
+            const statusClass = b.status === 'pending' ? 'bg-red' : 'bg-green';
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${b.id}</td>
+                    <td>${name}</td>
+                    <td><span class="admin-badge ${statusClass}">${b.status}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderAdmDrivers(drivers) {
+        const tbody = document.getElementById('adm-drivers-table');
+        tbody.innerHTML = '';
+        drivers.forEach(d => {
+            const badge = d.is_verified ? '<span class="admin-badge bg-green">Yes</span>' : '<span class="admin-badge bg-red">No</span>';
+            const action = !d.is_verified ? `<button class="btn" onclick="admVerify(${d.id})">Verify</button>` : '';
+            tbody.innerHTML += `
+                <tr>
+                    <td>${d.full_name}</td>
+                    <td>${d.status}</td>
+                    <td>${badge}</td>
+                    <td>${action}</td>
+                </tr>
+            `;
+        });
+    }
+
+    function updateAdmStats(bookings, drivers) {
+        document.getElementById('adm-active').textContent = bookings.filter(b => b.status === 'pending').length;
+        document.getElementById('adm-drivers').textContent = drivers.length;
+    }
+
+    // 4. Actions
+    async function admAddMock() {
+        const name = prompt("Test Passenger Name:");
+        if(!name) return;
+        const { data: p } = await sb.from('passengers').insert([{ full_name: name }]).select().single();
+        if(p) {
+            await sb.from('bookings').insert([{ passenger_id: p.id, pickup_location: 'Test', dropoff_location: 'CBD', price: 2500, status: 'pending' }]);
+            loadAdminData();
+        }
+    }
+
+    async function admAddDriver() {
+        const name = prompt("Driver Name:");
+        if(!name) return;
+        await sb.from('drivers').insert([{ full_name: name, status: 'offline' }]);
+        loadAdminData();
+    }
+
+    async function admVerify(id) {
+        await sb.from('drivers').update({ is_verified: true }).eq('id', id);
+        loadAdminData();
+    }
+</script>
+    <!-- ========================================== -->
+<!-- RIDE9JA ADMIN PANEL (Integrated) -->
+<!-- ========================================== -->
+
+<style>
+    #admin-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-light); z-index: 5000; display: none; }
+    #admin-overlay.active { display: block; }
+    
+    /* Admin Styles (Same as before) */
+    .admin-layout { display: flex; height: 100vh; }
+    .admin-sidebar { width: 260px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
+    .admin-main { flex: 1; padding: 40px; overflow-y: auto; }
+    .admin-panel { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 40px; }
+    .admin-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    .admin-table th { text-align: left; padding: 15px; color: #718096; font-weight: 700; font-size: 13px; text-transform: uppercase; }
+    .admin-table td { background: #fff; padding: 18px 15px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+    .admin-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .bg-green { background: #d1fae5; color: #065f46; }
+    .bg-red { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div id="admin-overlay">
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div style="font-size: 28px; font-weight: 800; margin-bottom: 50px;">🚖 Admin</div>
+            <button class="btn" style="color: white; background: transparent; text-align: left;" onclick="closeAdmin()">❌ Close Admin</button>
+        </aside>
+        <main class="admin-main">
+            <h1>Dashboard</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>Revenue</div>
+                    <div class="stat-value" id="adm-revenue">₦0</div>
+                </div>
+                <div class="stat-card">
+                    <div>Active Rides</div>
+                    <div class="stat-value" id="adm-active">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>Total Drivers</div>
+                    <div class="stat-value" id="adm-drivers">0</div>
+                </div>
+            </div>
+
+            <div class="admin-panel">
+                <div style="display: flex; justify-content: space-between;">
+                    <h2>Recent Bookings</h2>
+                    <button class="btn" onclick="admAddMock()">+ Add Booking</button>
+                </div>
+                <table class="admin-table">
+                    <thead><tr><th>ID</th><th>Passenger</th><th>Status</th></tr></thead>
+                    <tbody id="adm-bookings-table"></tbody>
+                </table>
+            </div>
+
+            <div class="admin-panel">
+                <h2>Driver Management</h2>
+                <button class="btn" onclick="admAddDriver()">+ Add Driver</button>
+                <br><br>
+                <table class="admin-table">
+                    <thead><tr><th>Name</th><th>Status</th><th>Verified</th><th>Action</th></tr></thead>
+                    <tbody id="adm-drivers-table"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // INTEGRATED ADMIN LOGIC
+    // ==========================================
+
+    // 1. Open Admin
+    function openAdmin() {
+        document.getElementById('admin-overlay').classList.add('active');
+        loadAdminData();
+    }
+
+    function closeAdmin() {
+        document.getElementById('admin-overlay').classList.remove('active');
+    }
+
+    // 2. Load Data (Uses Global 'sb' from script.js)
+    async function loadAdminData() {
+        if (typeof sb === 'undefined') {
+            alert("Error: Database not connected. Script.js may not have loaded.");
+            return;
+        }
+
+        const { data: bookings } = await sb.from('bookings').select('*, passengers(full_name)');
+        const { data: drivers } = await sb.from('drivers').select('*');
+
+        renderAdmBookings(bookings || []);
+        renderAdmDrivers(drivers || []);
+        updateAdmStats(bookings || [], drivers || []);
+    }
+
+    // 3. Render Functions
+    function renderAdmBookings(bookings) {
+        const tbody = document.getElementById('adm-bookings-table');
+        tbody.innerHTML = '';
+        bookings.forEach(b => {
+            const name = b.passengers ? b.passengers.full_name : 'Guest';
+            const statusClass = b.status === 'pending' ? 'bg-red' : 'bg-green';
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${b.id}</td>
+                    <td>${name}</td>
+                    <td><span class="admin-badge ${statusClass}">${b.status}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderAdmDrivers(drivers) {
+        const tbody = document.getElementById('adm-drivers-table');
+        tbody.innerHTML = '';
+        drivers.forEach(d => {
+            const badge = d.is_verified ? '<span class="admin-badge bg-green">Yes</span>' : '<span class="admin-badge bg-red">No</span>';
+            const action = !d.is_verified ? `<button class="btn" onclick="admVerify(${d.id})">Verify</button>` : '';
+            tbody.innerHTML += `
+                <tr>
+                    <td>${d.full_name}</td>
+                    <td>${d.status}</td>
+                    <td>${badge}</td>
+                    <td>${action}</td>
+                </tr>
+            `;
+        });
+    }
+
+    function updateAdmStats(bookings, drivers) {
+        document.getElementById('adm-active').textContent = bookings.filter(b => b.status === 'pending').length;
+        document.getElementById('adm-drivers').textContent = drivers.length;
+    }
+
+    // 4. Actions
+    async function admAddMock() {
+        const name = prompt("Test Passenger Name:");
+        if(!name) return;
+        const { data: p } = await sb.from('passengers').insert([{ full_name: name }]).select().single();
+        if(p) {
+            await sb.from('bookings').insert([{ passenger_id: p.id, pickup_location: 'Test', dropoff_location: 'CBD', price: 2500, status: 'pending' }]);
+            loadAdminData();
+        }
+    }
+
+    async function admAddDriver() {
+        const name = prompt("Driver Name:");
+        if(!name) return;
+        await sb.from('drivers').insert([{ full_name: name, status: 'offline' }]);
+        loadAdminData();
+    }
+
+    async function admVerify(id) {
+        await sb.from('drivers').update({ is_verified: true }).eq('id', id);
+        loadAdminData();
+    }
+</script>
 </body>
 </html>
