@@ -3,22 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ride9ja Admin (Self-Sufficient)</title>
+    <title>Ride9ja Admin Dashboard</title>
     
-    <!-- Load Supabase Library -->
+    <!-- SUPABASE LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
+        /* --- VARIABLES --- */
         :root { 
             --primary: #008751; 
             --primary-dark: #00663d; 
+            --accent: #ffcc00; 
             --bg-light: #f4f7f6; 
             --text-dark: #1a202c; 
-            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+            --card-shadow: 0 10px 15px -3px rgba(0, 0,0, 0.1); 
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; }
         
-        /* --- Sidebar --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- SIDEBAR (Green Gradient) --- */
         aside { 
             width: 260px; 
             background: linear-gradient(180deg, #009c5e 0%, #00663d 100%);
@@ -26,65 +30,43 @@
             padding: 25px; 
             display: flex; 
             flex-direction: column; 
-            box-shadow: 4px 0 10px rgba(0,0,0,0.1); 
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
             z-index: 10;
         }
+        
         .brand { font-size: 28px; font-weight: 800; margin-bottom: 50px; display: flex; align-items: center; gap: 10px; }
-        nav button { 
-            background: transparent; 
+        
+        /* --- BUTTONS --- */
+        .btn { 
+            padding: 10px 20px; 
             border: none; 
-            color: rgba(255,255,255,0.8); 
-            width: 100%; 
-            padding: 15px; 
-            text-align: left; 
+            border-radius: 8px; 
             cursor: pointer; 
-            margin-bottom: 8px; 
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            font-weight: 600; 
+            color: white; 
+            background: var(--primary); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+            transition: 0.2s; 
             display: flex;
             align-items: center;
+            gap: 10px;
         }
-        nav button:hover { background: rgba(255,255,255,0.15); transform: translateX(5px); }
-        nav button.active { background: var(--white); color: var(--primary); font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        .settings-area { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; }
-        .btn-settings { color: rgba(255,255,255,0.6); font-size: 14px; cursor: pointer; text-align: left; width: 100%; padding: 10px; background: none; border: none; }
-        .btn-settings:hover { color: white; }
+        .btn:hover { background: var(--primary-dark); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
 
-        /* --- Main Content --- */
-        main { flex: 1; padding: 40px; overflow-y: auto; }
-        h1 { margin-bottom: 30px; color: var(--primary-dark); font-size: 32px; }
-        
-        /* --- Stats Cards --- */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px; }
-        .stat-card { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 16px; 
-            box-shadow: var(--card-shadow); 
-            border-top: 5px solid transparent; 
+        /* --- BADGES --- */
+        .badge { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
         }
-        .stat-value { font-size: 42px; font-weight: 800; margin: 10px 0; color: var(--text-dark); }
-        .stat-label { color: #718096; font-size: 14px; font-weight: 600; text-transform: uppercase; }
-        
-        /* --- Panels --- */
-        .panel { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 16px; 
-            box-shadow: var(--card-shadow); 
-            margin-bottom: 40px; 
-        }
-        .panel h2 { 
-            margin-bottom: 25px; 
-            font-size: 22px; 
-            color: var(--primary-dark); 
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 15px; 
-        }
-        
-        /* --- Tables --- */
+        .bg-green { background: #d1fae5; color: #065f46; }
+        .bg-red { background: #fee2e2; color: #991b1b; }
+        .bg-gray { background: #e2e8f0; color: #666; }
+
+        /* --- TABLES --- */
         table { 
             width: 100%; 
             border-collapse: separate; 
@@ -106,8 +88,8 @@
         }
         td:first-child { border-left: 1px solid #e2e8f0; border-radius: 8px 0 0 8px; }
         td:last-child { border-right: 1px solid #e2e8f0; border-radius: 0 8px 8px 0; }
-        
-        /* --- Forms & Inputs --- */
+
+        /* --- FORMS --- */
         .input-group { margin-bottom: 15px; display: flex; gap: 10px; }
         input[type="text"] { 
             padding: 10px 15px; 
@@ -116,74 +98,64 @@
             outline: none; 
             width: 100%; 
             box-sizing: border-box; 
+            font-size: 15px;
         }
         input[type="text"]:focus { border-color: var(--primary); }
-        
-        /* --- Buttons --- */
-        .btn { 
-            padding: 10px 20px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            color: white; 
-            background: var(--primary); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-            transition: 0.2s; 
+
+        /* --- PANELS --- */
+        .panel { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: var(--card-shadow); 
+            margin-bottom: 40px; 
         }
-        .btn:hover { background: var(--primary-dark); }
-        .btn-sm { padding: 5px 10px; font-size: 12px; }
-        
-        /* --- Badges --- */
-        .badge { 
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            font-size: 12px; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
+        .panel h2 { 
+            margin-bottom: 25px; 
+            font-size: 22px; 
+            color: var(--primary-dark); 
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 5px; 
+            padding-bottom: 15px; 
         }
-        .bg-green { background: #d1fae5; color: #065f46; }
-        .bg-red { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="brand">🚖 Ride9ja Admin</div>
-        <nav>
-            <button class="active">📊 Dashboard</button>
-        </nav>
-        <div class="settings-area">
-            <button class="btn-settings" onclick="showConnectModal()">⚙️ Settings (URL/Key)</button>
-        </div>
-    </aside>
+    <div class="brand">🚖 Ride9ja Admin</div>
+    <nav>
+        <button class="btn" style="color: rgba(255,255,255,0.8);">📊 Dashboard</button>
+        <div style="margin-top: auto; font-size: 12px; opacity: 0.6; color: rgba(255,255,255,0.5);">Connected to Real Database</div>
+</aside>
 
     <main>
         <h1>Dashboard</h1>
         
         <!-- Stats -->
-        <div class="stats-grid">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px;">
             <div class="stat-card">
-                <div class="stat-label">Revenue</div>
-                <div class="stat-value">₦0</div>
+                <div style="font-size: 14px; font-weight: 600; text-transform: uppercase; color: #718096;">Revenue</div>
+                <div class="stat-value" id="stat-revenue">₦0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Active Rides</div>
+                <div style="font-size: 14px; font-weight: 600; text-transform: uppercase; color: #718096;">Active Rides</div>
                 <div class="stat-value" id="stat-active">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Total Drivers</div>
+                <div style="font-size: 14px; font-weight: 600; text-transform: uppercase; color: #718096;">Total Drivers</div>
                 <div class="stat-value" id="stat-drivers">0</div>
             </div>
         </div>
 
         <!-- Bookings -->
         <div class="panel">
-            <h2>Recent Bookings</h2>
-            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2>Recent Bookings</h2>
+            </div>
+
             <div class="input-group">
-                <input type="text" id="bookingInput" placeholder="Test Passenger Name here...">
+                <input type="text" id="bookingInput" placeholder="Type Passenger Name here..." style="flex-grow: 1;">
                 <button class="btn" onclick="addMockBooking()">+ Add Booking</button>
             </div>
             <br><br>
@@ -196,15 +168,18 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="booking-table"></tbody>
+                <tbody id="booking-table">
+                    <!-- Data loads here -->
+                </tbody>
             </table>
         </div>
 
         <!-- Drivers -->
         <div class="panel">
             <h2>Driver Management</h2>
+
             <div class="input-group">
-                <input type="text" id="driverInput" placeholder="Test Driver Name here...">
+                <input type="text" id="driverInput" placeholder="Type Driver Name here..." style="flex-grow: 1;">
                 <button class="btn" onclick="addDriver()">+ Add Driver</button>
             </div>
             <br><br>
@@ -217,131 +192,69 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="driver-table"></tbody>
+                <tbody id="driver-table">
+                    <!-- Data loads here -->
+                </tbody>
             </table>
         </div>
     </main>
 
-    <!-- CONNECTION MODAL (The Manual Entry Fix) -->
-    <div id="settingsModal" class="panel" style="display: none;">
-        <h2>⚙️ Database Configuration</h2>
-        <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
-            Enter your Supabase URL and Key here. This bypasses connection errors.
-        </p>
-        <div class="form-group">
-            <label><strong>Supabase URL</strong></label>
-            <input type="text" id="configUrl" placeholder="https://...">
-        </div>
-        <div class="form-group">
-            <label><strong>Supabase Anon Key</strong></label>
-            <input type="text" id="configKey" placeholder="eyJ...">
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn" style="flex: 1;" onclick="saveConnection()">Connect to Database</button>
-            <button class="btn" style="background: #999;" onclick="hideConnectModal()">Cancel</button>
-        </div>
-    </div>
+    <div id="toast-container"></div>
 
     <script>
         // ==========================================
-        // 1. CONFIGURATION (Keys are pre-filled below)
+        // 1. CONFIGURATION (HARD CODED)
         // ==========================================
         
-        // NOTE: If you are copying this to GitHub, the keys are pre-filled with your working keys.
-        // If you get "Malformed URL" error, it means a "Ghost Character" got in.
-        // Use the "Settings" button to fix it manually without copying/pasting.
-        
+        // Your Verified Keys (Directly in code to avoid Copy-Paste/Scope issues)
         const URL = 'https://ryaaqozgpmuysjayomdd.supabase.co';
         const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YWFxb3pncG11eXNqYXlvbWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTk5ODMsImV4cCI6MjA4NDU5NTk4M30.MOtDemq56FMUizveP1WC2KJ-2YGIwknduVsxcn8DTBc';
-        let sb = null; // Initialize as null
+        let sb; // Initialize as null
 
         // ==========================================
-        // 2. INITIALIZATION
+        // 2. INITIALIZATION (Auto-Connect & Load Data)
         // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // Try to Load from LocalStorage (Legacy Support)
-            const savedUrl = localStorage.getItem('r9_url');
-            const savedKey = localStorage.getItem('r9_key');
+            console.log("Starting...");
 
-            if (savedUrl && savedKey) {
+            if (window.supabase) {
                 try {
-                    // Try to connect automatically
-                    sb = window.supabase.createClient(savedUrl, savedKey);
-                    console.log("✅ Connected automatically.");
-                    hideConnectModal();
+                    // Try to connect immediately
+                    sb = window.supabase.createClient(URL, KEY);
+                    console.log("✅ Connected to Database Successfully!");
+                    
+                    // If we reached here without crashing, load data
                     loadData();
-                } catch (e) {
-                    console.warn("Auto-connect failed, showing settings modal.");
-                    // If it failed, show modal
-                    document.getElementById('connectModal').style.display = 'block';
+                } catch (crash) {
+                    // This happens if URL has invisible characters (Ghost Characters)
+                    alert("❌ Connection Failed!");
+                    alert("CRASH: " + crash.message);
+                    alert("This usually means your URL/Key has invisible characters (spaces/newlines) from copy-pasting.");
+                    alert("Use this Safe Mode if keys are correct but connection fails.");
                 }
             } else {
-                // No saved keys, show modal
-                document.getElementById('connectModal').style.display = 'block';
+                alert("ERROR: Supabase Library not loaded. Check your internet.");
             }
         });
 
         // ==========================================
-        // 3. MODAL FUNCTIONS
+        // 3. LOAD DATA (Fetch from Real Database)
         // ==========================================
-        function showConnectModal() {
-            // Pre-fill inputs if keys exist
-            const savedUrl = localStorage.getItem('r9_url');
-            const savedKey = localStorage.getItem('r9_key');
-            if(savedUrl) document.getElementById('configUrl').value = savedUrl;
-            if(savedKey) document.getElementById('configKey').value = savedKey;
-        }
-
-        function hideConnectModal() {
-            document.getElementById('connectModal').style.display = 'none';
-        }
-
-        function saveConnection() {
-            const url = document.getElementById('configUrl').value.trim();
-            const key = document.getElementById('configKey').value.trim();
-
-            if(!url || !key) {
-                alert("Please enter both URL and Key.");
+        async function loadData() {
+            if(!sb) {
+                alert("Database not connected. Check connection logic.");
                 return;
             }
 
-            try {
-                // Test connection with clean keys
-                const testClient = window.supabase.createClient(url, key);
-                // If it doesn't crash, save it
-                localStorage.setItem('r9_url', url);
-                localStorage.setItem('r9_key', key);
-                
-                // Use the tested client
-                sb = testClient;
-                
-                alert("✅ Connected Successfully!");
-                hideConnectModal();
-                loadData();
-            } catch (e) {
-                alert("❌ Connection Failed: " + e.message);
-                alert("Common causes: 1. Extra 'http://' in URL. 2. Hidden spaces at start/end of key.");
-            }
-        }
+            // Fetch Real Bookings
+            const { data: bookings, error: bError } = await sb
+                .from('bookings')
+                .select('*, passengers(full_name)'); 
 
-        function resetConnection() {
-            if(confirm("This will clear your saved database keys. Are you sure?")) {
-                localStorage.removeItem('r9_url');
-                localStorage.removeItem('r9_key');
-                window.location.reload();
-            }
-        }
-
-        // ==========================================
-        // 4. DATA LOGIC
-        // ==========================================
-        async function loadData() {
-            if(!sb) return alert("Database not connected. Check Settings.");
-
-            const { data: bookings, error: bError } = await sb.from('bookings').select('*, passengers(full_name)'); 
-
-            const { data: drivers, error: dError } = await sb.from('drivers').select('*');
+            // Fetch Real Drivers
+            const { data: drivers, error: dError } = await sb
+                .from('drivers')
+                .select('*');
 
             if (bError) console.error('Booking Error:', bError);
             if (dError) console.error('Driver Error:', dError);
@@ -351,6 +264,9 @@
             updateStats(bookings || [], drivers || []);
         }
 
+        // ==========================================
+        // 4. RENDER FUNCTIONS
+        // ==========================================
         function renderBookings(bookings) {
             const tbody = document.getElementById('booking-table');
             tbody.innerHTML = '';
@@ -359,7 +275,6 @@
                 let statusClass = b.status === 'pending' ? 'bg-red' : 'bg-green';
                 
                 let actionBtn = '';
-                
                 if(b.status === 'pending') {
                     actionBtn = `<button class="btn btn-sm" onclick="cancelBooking(${b.id})">Cancel</button>`;
                 }
@@ -404,15 +319,23 @@
         }
 
         // ==========================================
-        // 5. ACTIONS
+        // 5. ACTIONS (Insert/Update)
         // ==========================================
-        async function addMockBooking() {
-            const input = document.getElementById('bookingInput');
-            const passengerName = input.value;
-            if(!passengerName) { alert("Type a passenger name!"); return; }
 
+        // BOOKING TEST (Uses Mock Passenger Name)
+        async function addMockBooking() {
+            if(!sb) {
+                alert("Not connected to database. Check console.");
+                return;
+            }
+
+            const passengerName = prompt("Enter Passenger Name (Test Mode):", "Test User");
+            if(!passengerName) return alert("No name entered.");
+
+            // 1. Add Passenger
             const { data: p } = await sb.from('passengers').insert([{ full_name: passengerName }]).select().single();
 
+            // 2. Create Booking
             if(p) {
                 const { error } = await sb.from('bookings').insert([{
                     passenger_id: p.id,
@@ -423,18 +346,23 @@
                 }]);
 
                 if(!error) {
-                    input.value = ''; 
-                    loadData();
+                    alert("✅ Booking Created Successfully!");
+                    document.getElementById('bookingInput').value = ''; // Clear input
+                    loadData(); // Refresh list
                 } else {
-                    alert("Error adding booking: " + error.message);
+                    alert("Error creating booking: " + error.message);
                 }
             }
         }
 
         async function addDriver() {
-            const input = document.getElementById('driverInput');
-            const name = input.value;
-            if(!name) return alert("Type a driver name!");
+            if(!sb) {
+                alert("Not connected.");
+                return;
+            }
+
+            const name = prompt("Enter Driver Name:");
+            if(!name) return alert("No name entered.");
 
             const { error } = await sb.from('drivers').insert([{
                 full_name: name,
@@ -442,8 +370,8 @@
             }]);
 
             if(!error) {
-                input.value = ''; 
-                loadData(); 
+                showToast("Driver Added!");
+                loadData();
             } else {
                 alert("Error adding driver: " + error.message);
             }
@@ -455,9 +383,8 @@
                 .eq('id', id);
 
             if(!error) {
+                showToast("Driver Verified!");
                 loadData();
-            } else {
-                alert("Error verifying driver: " + error.message);
             }
         }
 
@@ -467,10 +394,19 @@
                 .eq('id', id);
 
             if(!error) {
+                showToast("Booking Cancelled");
                 loadData();
-            } else {
-                alert("Error cancelling booking: " + error.message);
             }
+        }
+
+        // Utilities
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: slideIn 0.3s forwards;";
+            t.textContent = msg;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
         }
     </script>
 </body>
