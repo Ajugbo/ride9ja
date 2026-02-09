@@ -3,167 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ride9ja Admin - Safe Mode</title>
+    <title>Ride9ja Admin - Step-by-Step</title>
+    <!-- Load Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #008751; --bg-light: #f4f7f6; --text-dark: #2c3e50; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; }
-        
-        /* --- Header (The Safe Room) --- */
-        .safe-zone { background: #333; color: white; padding: 20px; width: 100%; border-bottom: 4px solid #222; box-sizing: border-box; }
-        .safe-row { display: flex; gap: 20px; align-items: center; margin-bottom: 10px; }
-        .safe-label { width: 100px; font-weight: bold; color: #aaa; }
-        .safe-input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #555; background: #444; color: white; outline: none; font-family: monospace; }
-        .safe-btn { padding: 10px 30px; background: #ffcc00; color: black; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .safe-btn:hover { background: #e6b800; }
-        .safe-msg { flex: 1; font-size: 14px; font-weight: bold; color: #00ff00; margin-left: auto; }
-        .safe-msg.error { color: #ff0000; }
-        .hidden { display: none; }
-
-        /* --- Admin Layout --- */
-        aside { width: 250px; background: #00663d; color: white; padding: 20px; display: flex; flex-direction: column; }
-        .brand { font-size: 24px; font-weight: bold; margin-bottom: 40px; }
-        main { flex: 1; padding: 20px; overflow-y: auto; }
-        h1 { margin-bottom: 20px; color: var(--primary); }
-
-        /* --- Components --- */
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-        .bg-green { background: #d1fae5; color: #065f46; }
-        .bg-red { background: #fee2e2; color: #991b1b; }
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; background: var(--primary); }
+        body { font-family: sans-serif; padding: 40px; display: grid; gap: 20px; }
+        .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; background: #008751; color: white; border: none; border-radius: 8px; font-weight: bold; }
+        .btn:hover { background: #00663d; }
+        .log-box { background: #f4f4f6; padding: 20px; border-radius: 8px; border: 1px solid #ddd; font-family: monospace; white-space: pre-wrap; }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        h1 { grid-column: 1 / -1; }
     </style>
 </head>
 <body>
 
-    <!-- 1. SAFE CONNECTION AREA (Always Visible) -->
-    <div class="safe-zone">
-        <div class="safe-row">
-            <span class="safe-label">Supabase URL:</span>
-            <input type="text" id="in-url" placeholder="https://..." value="https://ryaaqozgpmuysjayomdd.supabase.co">
-        </div>
-        <div class="safe-row">
-            <span class="safe-label">Supabase Key:</span>
-            <input type="text" id="in-key" placeholder="eyJ...">
-        </div>
-        <div class="safe-row">
-            <button class="safe-btn" onclick="testConnection()">🔌 TEST CONNECTION</button>
-            <span id="status-msg" class="safe-msg"></span>
-        </div>
-    </div>
+    <h1>Admin Diagnostics</h1>
 
-    <!-- 2. ADMIN DASHBOARD (Hidden until connected) -->
-    <div id="admin-app" class="hidden">
-        <aside>
-            <div class="brand">🚖 Admin</div>
-            <div>Connected</div>
-        </aside>
+    <!-- DIAGNOSTIC BUTTONS -->
+    <button class="btn" onclick="checkLibrary()">1. Check if Supabase Library is Loaded</button>
+    <button class="btn" onclick="checkClient()">2. Try to Create Database Client</button>
+    <button class="btn" onclick="checkFetch()">3. Try to Fetch Data</button>
+    <button class="btn" onclick="manualAuth()">4. Manual Login Test</button>
 
-        <main>
-            <h1>Dashboard</h1>
-            
-            <div class="panel">
-                <h2>Recent Bookings</h2>
-                <table>
-                    <thead><tr><th>ID</th><th>Passenger</th><th>Status</th></tr></thead>
-                    <tbody id="booking-table"></tbody>
-                </table>
-            </div>
-
-            <div class="panel">
-                <h2>Drivers</h2>
-                <table>
-                    <thead><tr><th>Name</th><th>Status</th><th>Verified</th></tr></thead>
-                    <tbody id="driver-table"></tbody>
-                </table>
-            </div>
-        </main>
-    </div>
+    <!-- LOG OUTPUT -->
+    <div id="log-output" class="log-box">Waiting for user input...</div>
 
     <script>
-        // ==========================================
-        // 1. LOGIC
-        // ==========================================
-        let sb = null;
+        // We use default keys for this test, but you will paste yours
+        // To test with your keys, find `url` and `key` variables below and paste them.
+        const url = 'https://ryaaqozgpmuysjayomdd.supabase.co';
+        const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YWFxb3pncG11eXNqYXlvbWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTk5ODMsImV4cCI6MjA4NDU5NTk4M30.MOtDemq56FMUizveP1WC2KJ-2YGIwknduVsxcn8DTBc';
+        let sb;
 
-        // 2. TEST CONNECTION (The Safe Button)
-        async function testConnection() {
-            const urlInput = document.getElementById('in-url').value.trim();
-            const keyInput = document.getElementById('in-key').value.trim();
-            const msgSpan = document.getElementById('status-msg');
+        // 1. Check Library
+        async function checkLibrary() {
+            const log = document.getElementById('log-output');
+            log.innerHTML += `<div>Step 1: Checking Library...</div>`;
 
-            msgSpan.textContent = "Connecting...";
-            msgSpan.className = "safe-msg";
+            if (window.supabase) {
+                log.innerHTML += `<div class="pass">SUCCESS: Supabase Library is loaded.</div>`;
+            } else {
+                log.innerHTML += `<div class="fail">FAIL: Supabase Library NOT found.</div>`;
+            }
+        }
 
-            // Simple Validation
-            if(!urlInput || !keyInput) {
-                msgSpan.textContent = "Error: Please type both URL and Key.";
-                msgSpan.classList.add("error");
+        // 2. Check Client
+        async function checkClient() {
+            const log = document.getElementById('log-output');
+            
+            if (!window.supabase) {
+                log.innerHTML += `<div class="fail">FAIL: Library not loaded yet. Run Step 1 first.</div>`;
                 return;
             }
 
-            // Load Library (We load it ONLY when you click button)
-            if(!window.supabase) {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-                script.onload = () => {
-                    // Library loaded, now try to connect
-                    tryConnect(urlInput, keyInput, msgSpan);
-                };
-                script.onerror = () => {
-                    msgSpan.textContent = "Error: Failed to load Supabase library.";
-                    msgSpan.classList.add("error");
-                };
-                document.head.appendChild(script);
-            } else {
-                connect(urlInput, keyInput, msgSpan);
-            }
-        }
-
-        async function connect(url, key, msgSpan) {
             try {
-                // This is where the crash happens. If it crashes here, we know it's a bad URL/Key.
-                sb = window.supabase.createClient(url, key);
-                
-                msgSpan.textContent = "✅ Connected!";
-                msgSpan.classList.remove("error");
-
-                // Show Dashboard
-                document.getElementById('admin-app').classList.remove('hidden');
-                loadDatabase();
-
+                const testSb = window.supabase.createClient(url, key);
+                log.innerHTML += `<div class="pass">SUCCESS: Client Created. URL looks good.</div>`;
+                // We do NOT save it to 'sb' yet, just testing.
             } catch (e) {
-                msgSpan.textContent = "❌ CRASH: Invalid URL or Key. Check for hidden characters.";
-                msgSpan.classList.add("error");
-                console.error(e);
+                log.innerHTML += `<div class="fail">FAIL: Client Creation Crashed.</div>`;
+                log.innerHTML += `<div class="fail">Error: ${e.message}</div>`;
+                if (e.message.includes("malformed")) {
+                    log.innerHTML += `<div class="fail">HINT: URL has invisible characters.</div>`;
+                }
             }
         }
 
-        // 3. LOAD DATABASE
-        async function loadDatabase() {
-            if(!sb) return;
+        // 3. Check Fetch
+        async function checkFetch() {
+            const log = document.getElementById('log-output');
+            
+            if (!window.supabase) {
+                log.innerHTML += `<div class="fail">FAIL: Library not loaded.</div>`;
+                return;
+            }
 
-            const { data: bookings } = await sb.from('bookings').select('*, passengers(full_name)');
-            const { data: drivers } = await sb.from('drivers').select('*');
+            // Create a temp client just to test fetch
+            const testSb = window.supabase.createClient(url, key);
+            
+            try {
+                // Try to fetch a specific booking ID (1)
+                const { data } = await testSb.from('bookings').select('*').limit(1);
+                log.innerHTML += `<div class="pass">SUCCESS: Fetched bookings. Connection is Real.</div>`;
+                log.innerHTML += `<div>Found: ${data.length} records.</div>`;
+            } catch (e) {
+                log.innerHTML += `<div class="fail">FAIL: Fetch Crashed.</div>`;
+                log.innerHTML += `<div class="fail">Error: ${e.message}</div>`;
+            }
+        }
 
-            // Render Bookings
-            const bTable = document.getElementById('booking-table');
-            bTable.innerHTML = '';
-            bookings.forEach(b => {
-                const name = b.passengers ? b.passengers.full_name : 'Guest';
-                const statusColor = b.status === 'pending' ? 'red' : 'green';
-                bTable.innerHTML += `<tr><td>#${b.id}</td><td>${name}</td><td><span style="color:${statusColor}; font-weight:bold;">${b.status}</span></td></tr>`;
+        // 4. Manual Auth
+        async function manualAuth() {
+            const log = document.getElementById('log-output');
+            if (!window.supabase) return;
+
+            const { data, error } = await window.supabase.auth.signIn({
+                email: 'test@ride9ja.com',
+                password: 'password123'
             });
 
-            // Render Drivers
-            const dTable = document.getElementById('driver-table');
-            dTable.innerHTML = '';
-            drivers.forEach(d => {
-                const verifiedBadge = d.is_verified ? '<span class="badge bg-green">Yes</span>' : '<span class="badge bg-red">No</span>';
-                dTable.innerHTML += `<tr><td>${d.full_name}</td><td>${d.status}</td><td>${verifiedBadge}</td></tr>`;
-            });
+            if (error) {
+                log.innerHTML += `<div class="fail">AUTH FAIL: ${error.message}</div>`;
+            } else {
+                log.innerHTML += `<div class="pass">AUTH SUCCESS: Logged in.</div>`;
+            }
         }
     </script>
 </body>
