@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ride9ja Admin (Borrowed Connection)</title>
-    <!-- Load Library -->
+    <title>Ride9ja Admin (Shared State)</title>
+    
+    <!-- SUPABASE LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        :root { --primary: #008751; --bg-light: #f4f7f6; --text-dark: #2c3e50; --card-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        :root { --primary: #008751; --primary-dark: #00663d; --bg-light: #f4f7f6; --text-dark: #2c3e50; --card-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; }
+        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 260px; background: #00663d; color: white; padding: 25px; display: flex; flex-direction: column; }
+        aside { width: 260px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
         .brand { font-size: 28px; font-weight: 800; margin-bottom: 50px; display: flex; align-items: center; gap: 10px; }
-        .status-msg { font-size: 14px; margin-bottom: 20px; color: #718096; font-style: italic; }
         
         main { flex: 1; padding: 40px; overflow-y: auto; }
-        h1 { margin-bottom: 30px; color: #005f3a; font-size: 32px; }
+        h1 { margin-bottom: 30px; color: var(--primary-dark); font-size: 32px; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 40px; }
         .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: var(--card-shadow); border-top: 5px solid transparent; }
@@ -31,6 +32,9 @@
         td { background: #fff; padding: 18px 15px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
         td:first-child { border-left: 1px solid #e2e8f0; border-radius: 8px 0 0 8px; }
         td:last-child { border-right: 1px solid #e2e8f0; border-radius: 0 8px 8px 0; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        input[type="text"] { padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; }
         
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; background: var(--primary); }
         .btn:hover { background: var(--primary-dark); }
@@ -39,17 +43,24 @@
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
         .bg-green { background: #d1fae5; color: #065f46; }
         .bg-red { background: #fee2e2; color: #991b1b; }
-        .bg-gray { background: #e2e8f0; color: #666; }
+        .bg-orange { background: #fff3cd; color: #d97706; }
+        
+        /* --- Connection Status Box --- */
+        #conn-status {
+            background: #fff3cd; border-left: 5px solid #d97706;
+            color: #d97706;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="brand">🚖 Admin Panel</div>
-        <div class="status-msg" id="connection-status">Checking Main Website Connection...</div>
-        <nav>
-            <button class="btn" style="background: transparent; text-align: left; color: rgba(255,255,255,0.7);" onclick="location.reload()">🔄 Refresh Page</button>
-        </nav>
+        <div class="brand">🚖 Admin</div>
+        <div id="conn-status">Checking connection...</div>
     </aside>
 
     <main>
@@ -68,72 +79,99 @@
 
         <div class="panel">
             <h2>Recent Bookings</h2>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                <div>Live Data from Supabase</div>
-                <button class="btn" onclick="loadData()">🔄 Refresh Data</button>
+            
+            <div class="input-group">
+                <input type="text" id="bookingInput" placeholder="Test Passenger Name...">
+                <button class="btn" onclick="addMockBooking()">+ Add Booking</button>
             </div>
+            <br><br>
             <table>
-                <thead><tr><th>ID</th><th>Passenger</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody id="booking-table"></tbody>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Passenger</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="booking-table">
+                    <!-- Data loads here -->
+                </tbody>
             </table>
         </div>
 
         <div class="panel">
-            <h2>Drivers</h2>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                <div>Live Data from Supabase</div>
+            <h2>Driver Management</h2>
+            
+            <div class="input-group">
+                <input type="text" id="driverInput" placeholder="Test Driver Name...">
+                <button class="btn" onclick="addDriver()">+ Add Driver</button>
             </div>
+            <br><br>
             <table>
-                <thead><tr><th>Name</th><th>Status</th><th>Verified</th></tr></thead>
-                <tbody id="driver-table"></tbody>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Verified</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="driver-table">
+                    <!-- Data loads here -->
+                </tbody>
             </table>
         </div>
     </main>
 
     <script>
-        let sb = null; // Connection object
-        let connected = false; // Connection status
+        let sb = null;
 
         // ==========================================
-        // 1. THE BORROW STRATEGY
+        // 1. CONNECTION LOGIC (Smart Reader)
         // ==========================================
-        window.addEventListener('DOMContentLoaded', () => {
-            checkConnection();
-        });
-
-        function checkConnection() {
-            const statusDiv = document.getElementById('connection-status');
+        async function initConnection() {
+            const statusDiv = document.getElementById('conn-status');
             
-            // Check 1: Does Library exist?
-            if (!window.supabase) {
-                statusDiv.textContent = "❌ ERROR: Supabase library not found. Website must load first.";
-                statusDiv.style.color = "red";
-                return;
-            }
+            try {
+                // ATTEMPT 1: Restore from Storage
+                const storedString = localStorage.getItem('r9_client_string');
+                
+                if (storedString) {
+                    statusDiv.innerHTML = "Connected via Local Storage...";
+                    
+                    // Reconstruct client (Supabase 2.x allows string restoration)
+                    // We need to inject the URL and Key into the new client instance
+                    const tempClient = window.supabase.createClient(URL, KEY);
+                    // Hack: Restore the config (session) if possible, or just use the new client as a wrapper
+                    // Ideally we'd use the restored auth, but for this simple version, the new client works with the old keys.
+                    // For Supabase JS v2, creating a new client with the old URL/Key is fine.
+                    
+                    if (tempClient) {
+                        sb = tempClient;
+                        statusDiv.innerHTML = "✅ Connection Inherited!";
+                        statusDiv.style.borderLeftColor = "#28a745";
+                        statusDiv.style.color = "#065f46";
+                        loadData();
+                    }
+                } else {
+                    statusDiv.innerHTML = "⚠️ Disconnected. Open your website (index.html) first.";
+                    statusDiv.style.borderLeftColor = "#ef4444";
+                    statusDiv.style.color = "#ef4444";
+                }
 
-            // Check 2: Is Website connected? (This is the fix)
-            // We look for the `sb` variable defined in script.js
-            if (typeof window.sb !== 'undefined') {
-                sb = window.sb;
-                connected = true;
-                statusDiv.textContent = "✅ Connected! (Using Website's Brain)";
-                statusDiv.style.color = "green";
-                loadData(); // Start loading data
-            } else {
-                connected = false;
-                statusDiv.textContent = "⚠️ Disconnected. Open your website (index.html) first.";
-                statusDiv.style.color = "orange";
+            } catch (e) {
+                console.error(e);
+                statusDiv.innerHTML = "CRASH: " + e.message;
+                statusDiv.style.borderLeftColor = "red";
             }
         }
 
         // ==========================================
-        // 2. LOAD DATA
+        // 2. DATA LOADER
         // ==========================================
         async function loadData() {
-            if(!connected || !sb) {
-                alert("Not connected to database. Ensure main website is open.");
-                return;
-            }
+            if(!sb) return;
 
             try {
                 const { data: bookings, error: bError } = await sb
@@ -151,7 +189,7 @@
                 renderDrivers(drivers || []);
                 updateStats(bookings || [], drivers || []);
             } catch (e) {
-                alert("Error fetching data: " + e.message);
+                alert("Error loading data: " + e.message);
             }
         }
 
@@ -164,8 +202,8 @@
             bookings.forEach(b => {
                 const passengerName = b.passengers ? b.passengers.full_name : 'Guest';
                 let statusClass = b.status === 'pending' ? 'bg-red' : 'bg-green';
-                
                 let actionBtn = '';
+                
                 if(b.status === 'pending') {
                     actionBtn = `<button class="btn btn-sm" onclick="cancelBooking(${b.id})">Cancel</button>`;
                 }
@@ -212,29 +250,113 @@
         // ==========================================
         // 4. ACTIONS
         // ==========================================
-        async function cancelBooking(id) {
-            if(!sb) return alert("Not connected");
-            const { error } = await sb.from('bookings')
-                .update({ status: 'cancelled' })
-                .eq('id', id);
+        async function addMockBooking() {
+            if(!sb) return alert("Not connected. Open your website (index.html) first.");
+            
+            const input = document.getElementById('bookingInput');
+            const passengerName = input.value;
 
-            if(!error) {
-                alert("Booking Cancelled");
-                loadData();
+            if(!passengerName) {
+                alert("Type a passenger name!");
+                return;
+            }
+
+            try {
+                const { data: p } = await sb.from('passengers').insert([{ full_name: passengerName }]).select().single();
+
+                if(p) {
+                    const { error } = await sb.from('bookings').insert([{
+                        passenger_id: p.id,
+                        pickup_location: 'Lekki Phase 1',
+                        dropoff_location: 'Victoria Island',
+                        price: 2500,
+                        status: 'pending'
+                    }]);
+
+                    if(!error) {
+                        input.value = ''; 
+                        loadData(); 
+                        alert("Booking Created!");
+                    } else {
+                        alert("Database Error: " + error.message);
+                    }
+                }
+            } catch (e) {
+                alert("System Error: " + e.message);
+            }
+        }
+
+        async function addDriver() {
+            if(!sb) return alert("Not connected. Open your website (index.html) first.");
+
+            const input = document.getElementById('driverInput');
+            const name = input.value;
+
+            if(!name) {
+                alert("Type a driver name!");
+                return;
+            }
+
+            try {
+                const { error } = await sb.from('drivers').insert([{
+                    full_name: name,
+                    status: 'offline'
+                }]);
+
+                if(!error) {
+                    input.value = ''; 
+                    loadData();
+                    alert("Driver Added!");
+                } else {
+                    alert("Database Error: " + error.message);
+                }
+            } catch (e) {
+                alert("System Error: " + e.message);
             }
         }
 
         async function verifyDriver(id) {
-            if(!sb) return alert("Not connected");
-            const { error } = await sb.from('drivers')
-                .update({ is_verified: true })
-                .eq('id', id);
+            if(!sb) return;
 
-            if(!error) {
-                alert("Driver Verified");
-                loadData();
+            try {
+                const { error } = await sb.from('drivers')
+                    .update({ is_verified: true })
+                    .eq('id', id);
+
+                if(!error) {
+                    loadData();
+                    alert("Driver Verified!");
+                } else {
+                    alert("Database Error: " + error.message);
+                }
+            } catch (e) {
+                alert("System Error: " + e.message);
             }
         }
+
+        async function cancelBooking(id) {
+            if(!sb) return;
+
+            try {
+                const { error } = await sb.from('bookings')
+                    .update({ status: 'cancelled' })
+                    .eq('id', id);
+
+                if(!error) {
+                    loadData();
+                    alert("Booking Cancelled");
+                } else {
+                    alert("Database Error: " + error.message);
+                }
+            } catch (e) {
+                alert("System Error: " + e.message);
+            }
+        }
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            initConnection();
+        });
     </script>
 </body>
 </html>
