@@ -5,7 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+</head><style>
+    /* Admin Dashboard Specific Styles - Override main site styles */
+    body { 
+        background: #f5f5f5 !important; 
+        color: #333 !important; 
+        font-family: 'Poppins', sans-serif !important;
+        padding: 20px !important;
+    }
+    
+    body::before { display: none !important; } /* Remove gradient overlay */
+    
+    .admin-dashboard { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        background: white; 
+        padding: 30px; 
+        border-radius: 10px; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .admin-dashboard h1 { 
+        color: #0066FF !important; 
+        margin-bottom: 30px !important;
+        font-size: 2rem !important;
+    }
+    
+    .stats-grid { 
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 20px; 
+        margin: 20px 0; 
+    }
+    
+    .stat-card { 
+        background: #f8f9fa !important; 
+        padding: 20px; 
+        border-radius: 8px; 
+        text-align: center; 
+        border: 1px solid #e9ecef;
+    }
+    
+    .stat-card h3 { 
+        color: #6c757d !important; 
+        margin-bottom: 10px; 
+        font-size: 1rem !important;
+    }
+    
+    .stat-card p { 
+        color: #0066FF !important; 
+        font-size: 2em !important; 
+        font-weight: bold; 
+    }
+    
+    .tabs { 
+        display: flex; 
+        gap: 10px; 
+        margin: 30px 0 20px; 
+    }
+    
+    .tab-btn { 
+        padding: 10px 20px; 
+        background: #e9ecef !important; 
+        color: #495057 !important; 
+        border: none; 
+        border-radius: 5px;
+        cursor: pointer; 
+        font-size: 1rem !important;
+    }
+    
+    .tab-btn.active { 
+        background: #0066FF !important; 
+        color: white !important; 
+    }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        background: white; 
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    th { 
+        background: #0066FF !important; 
+        color: white !important; 
+        padding: 12px !important;
+        text-align: left;
+    }
+    
+    td { 
+        padding: 12px !important; 
+        border-bottom: 1px solid #e9ecef; 
+        color: #212529 !important;
+    }
+    
+    tr:hover { background: #f8f9fa; }
+    
+    /* Hide navigation and other main site elements */
+    .navbar, .hero, footer, .section-city, .section-interstate,
+    .section-how, .section-safety, .section-cta, .modal-overlay {
+        display: none !important;
+    }
+</style>
 <body>
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
